@@ -1,0 +1,13 @@
+[package]
+name = "mp3-metadata"
+version = "0.1.0"
+authors = ["Guillaume Gomez <guillaume1.gomez@gmail.com>"]
+
+description = "Metadata parser for MP3 files"
+repository = "https://github.com/GuillaumeGomez/mp3-header"
+license = "MIT"
+
+keywords = ["mp3", "metadata"]
+
+[lib]
+name = "mp3_metadata"
