@@ -1,11 +1,12 @@
 use std::convert::From;
 use std::default::Default;
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub enum Error {
     FileError,
     NotMP3,
     NoHeader,
+    DuplicatedIDV3,
 }
 
 #[allow(non_camel_case_types)]

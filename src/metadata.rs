@@ -8,6 +8,31 @@ use enums::{ChannelType, Copyright, CRC, Emphasis, Error, Genre, Layer, Status, 
 use types::{AudioTag, Frame, MP3Metadata};
 use utils::{compute_duration, create_str, get_line, get_samp_line};
 
+fn get_idv3(i: &mut u32, buf: &[u8], meta: &mut MP3Metadata) -> Result<(), Error> {
+    let x = *i as usize;
+    // Get extended information
+    if x <= buf.len() - 128 && buf[x + 1] == 'A' as u8 && buf[x + 2] == 'G' as u8 {
+        if meta.tag.is_some() {
+            return Err(Error::DuplicatedIDV3);
+        }
+        if let Some(last) = meta.frames.last_mut() {
+            last.size = *i - last.size - 1;
+        }
+        *i += 126;
+        // tag v1
+        meta.tag = Some(AudioTag {
+            title: create_str(buf, x + 3, 30),
+            artist: create_str(buf, x + 33, 30),
+            album: create_str(buf, x + 63, 30),
+            year: create_str(buf, x + 93, 4).parse::<u16>().unwrap_or(0),
+            comment: create_str(buf, x + 97,
+                                if buf[x + 97 + 28] != 0 { 30 } else { 28 }),
+            genre: Genre::from(buf[x + 127]),
+        });
+    }
+    Ok(())
+}
+
 pub fn read_from_file<P>(file: P) -> Result<MP3Metadata, Error>
 where P: AsRef<Path> {
     if let Some(mut fd) = File::open(file).ok() {
@@ -35,23 +60,8 @@ pub fn read_from_slice(buf: &[u8]) -> Result<MP3Metadata, Error> {
         let mut frame: Frame = Default::default();
         loop {
             if c == 'T' as u8 {
-                let x = i as usize;
-                // Get extended information
-                if x <= buf.len() - 128 && buf[x + 1] == 'A' as u8 && buf[x + 2] == 'G' as u8 {
-                    if let Some(last) = meta.frames.last_mut() {
-                        last.size = i - last.size - 1;
-                    }
-                    // tag v1
-                    meta.tag = Some(AudioTag {
-                        title: create_str(buf, x + 3, 30),
-                        artist: create_str(buf, x + 33, 30),
-                        album: create_str(buf, x + 63, 30),
-                        year: create_str(buf, x + 93, 4).parse::<u16>().unwrap_or(0),
-                        comment: create_str(buf, x + 97,
-                                            if buf[x + 97 + 28] != 0 { 30 } else { 28 }),
-                        genre: Genre::from(buf[x + 127]),
-                    });
-                    i += 127;
+                if let Err(e) = get_idv3(&mut i, buf, &mut meta) {
+                    return Err(e);
                 }
             }
             i += 1;
@@ -119,6 +129,14 @@ pub fn read_from_slice(buf: &[u8]) -> Result<MP3Metadata, Error> {
                     meta.frames.push(frame);
                     break;
                 }
+            } else if c == 'T' as u8 {
+                if let Err(e) = get_idv3(&mut i, buf, &mut meta) {
+                    return Err(e);
+                }
+                if i >= buf.len() as u32 {
+                    break 'a;
+                }
+                c = buf[i as usize];
             }
         }
         i += 1;
@@ -128,5 +146,29 @@ pub fn read_from_slice(buf: &[u8]) -> Result<MP3Metadata, Error> {
             last.size = i - last.size - 1;
         }
     }
-    Ok(meta)
+    if meta.frames.len() < 1 {
+        Err(Error::NotMP3)
+    } else {
+        Ok(meta)
+    }
+}
+
+#[test]
+fn not_mp3() {
+    let ret = read_from_file("src/lib.rs");
+
+    match ret {
+        Ok(_) => panic!("Wasn't supposed to be ok!"),
+        Err(e) => assert_eq!(e, Error::NotMP3),
+    }
+}
+
+#[test]
+fn double_id() {
+    let ret = read_from_file("assets/double_id.mp3");
+
+    match ret {
+        Ok(_) => panic!("Wasn't supposed to be ok!"),
+        Err(e) => assert_eq!(e, Error::DuplicatedIDV3),
+    }
 }
