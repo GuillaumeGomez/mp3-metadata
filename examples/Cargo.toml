@@ -1,13 +1,14 @@
 [package]
-name = "mp3-metadata"
-version = "0.1.0"
+name = "mp3-metadata-example"
 authors = ["Guillaume Gomez <guillaume1.gomez@gmail.com>"]
+version = "0.1.0"
 
 description = "Metadata parser for MP3 files"
 repository = "https://github.com/GuillaumeGomez/mp3-metadata"
 license = "MIT"
 
-keywords = ["mp3", "metadata"]
+[[bin]]
+name = "basic"
 
-[lib]
-name = "mp3_metadata"
+[dependencies]
+mp3-metadata = { path = "../" }
