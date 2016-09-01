@@ -190,7 +190,7 @@ impl From<u8> for Emphasis {
     }
 }
 
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Genre {
     Blues,
     ClassicRock,
@@ -319,7 +319,23 @@ pub enum Genre {
     ACapela,
     EuroHouse,
     DanceHall,
+    Something(String),
     Unknown,
+}
+
+impl Default for Genre {
+    fn default() -> Genre {
+        Genre::Unknown
+    }
+}
+
+impl<'a> From<&'a str> for Genre {
+    fn from(c: &'a str) -> Genre {
+        match c.parse::<u8>() {
+            Ok(nb) => Genre::from(nb),
+            Err(_) => Genre::Something(c.to_owned()),
+        }
+    }
 }
 
 impl From<u8> for Genre {

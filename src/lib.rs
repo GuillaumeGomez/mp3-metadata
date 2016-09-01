@@ -17,6 +17,8 @@ pub use types::{
     AudioTag,
     Frame,
     MP3Metadata,
+    OptionalAudioTags,
+    Url,
 };
 
 mod consts;
