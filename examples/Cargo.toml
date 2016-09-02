@@ -1,7 +1,7 @@
 [package]
 name = "mp3-metadata-example"
 authors = ["Guillaume Gomez <guillaume1.gomez@gmail.com>"]
-version = "0.1.0"
+version = "0.2.0"
 
 description = "Metadata parser for MP3 files"
 repository = "https://github.com/GuillaumeGomez/mp3-metadata"
