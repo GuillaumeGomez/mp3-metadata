@@ -77,7 +77,9 @@ pub fn get_url_fields(buf: &[u8], pos: usize, size: u32, changes: &mut bool,
 }
 
 pub fn get_field(buf: &[u8], pos: usize, size: u32) -> String {
-    if buf[pos] == 3 {
+    if size < 1 {
+        String::new()
+    } else if buf[pos] == 3 {
         create_str(buf, pos + 1, size as usize - 1)
     } else {
         // if `c` == 0, it's supposed to be ISO-8859-1, `String` doesn't handle it.

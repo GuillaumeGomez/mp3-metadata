@@ -12,12 +12,15 @@ use utils::{get_url_field, get_url_fields};
 fn get_id3(i: &mut u32, buf: &[u8], meta: &mut MP3Metadata) -> Result<(), Error> {
     let mut x = *i as usize;
     // Get extended information
-    if buf.len() > 127 && x <= buf.len() - 128 && // V1
+    if buf.len() > 127 && x + 127 < buf.len() && // V1
        buf[x] == 'T' as u8 && buf[x + 1] == 'A' as u8 && buf[x + 2] == 'G' as u8 {
         if meta.tag.is_some() {
             return Err(Error::DuplicatedIDV3);
         }
         if let Some(last) = meta.frames.last_mut() {
+            if *i <= last.size {
+                return Ok(());
+            }
             last.size = *i - last.size - 1;
         }
         *i += 126;
@@ -32,7 +35,7 @@ fn get_id3(i: &mut u32, buf: &[u8], meta: &mut MP3Metadata) -> Result<(), Error>
             genre: Genre::from(buf[x + 127]),
         });
         Ok(())
-    } else if buf.len() > 13 && // V2 and above
+    } else if buf.len() > x + 13 && // V2 and above
               buf[x] == 'I' as u8 && buf[x + 1] == 'D' as u8 && buf[x + 2] == '3' as u8 {
         let maj_version = buf[x + 3];
         let min_version = buf[x + 4];
@@ -50,7 +53,7 @@ fn get_id3(i: &mut u32, buf: &[u8], meta: &mut MP3Metadata) -> Result<(), Error>
 
         if has_extended_header {
             x += 10;
-            if x >= buf.len() - 4 {
+            if x + 4 >= buf.len() {
                 *i = x as u32;
                 return Ok(())
             }
@@ -58,6 +61,9 @@ fn get_id3(i: &mut u32, buf: &[u8], meta: &mut MP3Metadata) -> Result<(), Error>
                               ((buf[x + 1] as u32) << 14) |
                               ((buf[x + 2] as u32) << 7) |
                               buf[x + 3] as u32;
+            if header_size < 4 {
+                return Ok(())
+            }
             x += header_size as usize - 4;
         }
         if x + tag_size >= buf.len() {
@@ -78,11 +84,17 @@ fn get_id3(i: &mut u32, buf: &[u8], meta: &mut MP3Metadata) -> Result<(), Error>
                     skip = false;
                     continue;
                 }
-                if i < tag_size - 1 && (buf[i] & 0xFF) == 0xFF && buf[i + 1] == 0 {
+                if i + 1 >= buf.len() {
+                    return Ok(());
+                }
+                if i + 1 < tag_size && (buf[i] & 0xFF) == 0xFF && buf[i + 1] == 0 {
                     v[new_pos] = 0xFF;
                     new_pos += 1;
                     skip = true;
                     continue;
+                }
+                if new_pos >= v.len() {
+                    return Ok(());
                 }
                 v[new_pos] = buf[i];
                 new_pos += 1;
@@ -97,7 +109,7 @@ fn get_id3(i: &mut u32, buf: &[u8], meta: &mut MP3Metadata) -> Result<(), Error>
         let mut op = OptionalAudioTags::default();
         let mut changes = false;
         loop {
-            if length - pos < id3_frame_size {
+            if length < id3_frame_size + pos {
                 break;
             }
 
@@ -309,6 +321,9 @@ pub fn read_from_slice(buf: &[u8]) -> Result<MP3Metadata, Error> {
                 c = buf[i as usize];
                 if c == 0xFA || c == 0xFB {
                     if let Some(last) = meta.frames.last_mut() {
+                        if i < last.size {
+                            return Err(Error::InvalidData);
+                        }
                         last.size = i - last.size;
                     }
                     frame.size = i;
@@ -374,6 +389,9 @@ pub fn read_from_slice(buf: &[u8]) -> Result<MP3Metadata, Error> {
     }
     if meta.tag.is_none() {
         if let Some(last) = meta.frames.last_mut() {
+            if i <= last.size {
+                return Err(Error::InvalidData);
+            }
             last.size = i - last.size - 1;
         }
     }
