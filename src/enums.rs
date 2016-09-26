@@ -7,6 +7,7 @@ pub enum Error {
     NotMP3,
     NoHeader,
     DuplicatedIDV3,
+    InvalidData,
 }
 
 #[allow(non_camel_case_types)]

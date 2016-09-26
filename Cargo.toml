@@ -1,6 +1,6 @@
 [package]
 name = "mp3-metadata"
-version = "0.2.1"
+version = "0.2.3"
 authors = ["Guillaume Gomez <guillaume1.gomez@gmail.com>"]
 
 description = "Metadata parser for MP3 files"
