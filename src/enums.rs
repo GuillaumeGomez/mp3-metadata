@@ -19,12 +19,12 @@ impl std::fmt::Display for Error {
 
 impl std::error::Error for Error {
     fn description(&self) -> &str {
-        match self {
-            &Error::FileError => "An I/O error occurred",
-            &Error::NotMP3 => "The file is not a valid MP3 file",
-            &Error::NoHeader => "The file is missing an MP3 header",
-            &Error::DuplicatedIDV3 => "The MP3 file contains a duplicate IDv3 frame",
-            &Error::InvalidData => "The MP3 metadata is invalid",
+        match *self {
+            Error::FileError => "An I/O error occurred",
+            Error::NotMP3 => "The file is not a valid MP3 file",
+            Error::NoHeader => "The file is missing an MP3 header",
+            Error::DuplicatedIDV3 => "The MP3 file contains a duplicate IDv3 frame",
+            Error::InvalidData => "The MP3 metadata is invalid",
         }
     }
 }
