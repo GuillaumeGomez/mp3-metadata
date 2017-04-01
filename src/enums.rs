@@ -1,5 +1,6 @@
 use std::convert::From;
 use std::default::Default;
+use std;
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub enum Error {
@@ -8,6 +9,24 @@ pub enum Error {
     NoHeader,
     DuplicatedIDV3,
     InvalidData,
+}
+
+impl std::fmt::Display for Error {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
+        (self as &std::error::Error).description().fmt(f)
+    }
+}
+
+impl std::error::Error for Error {
+    fn description(&self) -> &str {
+        match self {
+            &Error::FileError => "An I/O error occurred",
+            &Error::NotMP3 => "The file is not a valid MP3 file",
+            &Error::NoHeader => "The file is missing an MP3 header",
+            &Error::DuplicatedIDV3 => "The MP3 file contains a duplicate IDv3 frame",
+            &Error::InvalidData => "The MP3 metadata is invalid",
+        }
+    }
 }
 
 #[allow(non_camel_case_types)]
