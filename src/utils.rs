@@ -1,4 +1,3 @@
-use std::slice::from_raw_parts;
 use std::time::Duration;
 
 use consts::SAMPLES_PER_FRAME;
@@ -44,15 +43,53 @@ pub fn get_samp_line(v: Version) -> usize {
     }
 }
 
-pub fn create_str(buf: &[u8], offset: usize, len: usize) -> String {
-    let tmp_v = buf[offset..offset + len].to_vec();
-    String::from_utf8(tmp_v).unwrap_or(String::new())
+pub fn create_latin1_str(buf: &[u8]) -> String {
+    // interpret each byte as full codepoint. UTF-16 is big enough to
+    // represent those, surrogate pairs can't be created that way
+    let utf16 = buf.iter().map(|c| *c as u16).collect::<Vec<u16>>();
+    String::from_utf16_lossy(utf16.as_ref())
 }
 
-pub fn create_utf16_str(buf: &[u8], offset: usize, len: usize) -> String {
-    //let tmp_v = buf[offset..offset + len].to_vec();
-    let x = unsafe { from_raw_parts(buf.as_ptr().offset(offset as isize) as *const u16, len / 2) };
-    String::from_utf16(x).unwrap_or(String::new())
+pub fn create_utf16_str(buf: &[u8]) -> String {
+    let mut v = Vec::<u16>::new();
+    if buf.len() >= 2 {
+        // BOM: \u{feff}
+        if buf[0] == 0xfe && buf[1] == 0xff {
+            // UTF-16BE
+            v.reserve(buf.len() / 2 - 1);
+            for i in 1..buf.len() / 2 {
+                v.push(
+                    (buf[2*i+0] as u16) << 8
+                    | (buf[2*i+1] as u16)
+                )
+            }
+            return String::from_utf16_lossy(v.as_ref());
+        } else if buf[0] == 0xff && buf[1] == 0xfe {
+            // UTF-16LE
+            v.reserve(buf.len() / 2 - 1);
+            for i in 1..buf.len() / 2 {
+                v.push(
+                    (buf[2*i+1] as u16) << 8
+                    | (buf[2*i+0] as u16)
+                )
+            }
+            return String::from_utf16_lossy(v.as_ref());
+        }
+    }
+    // try as UTF-16LE
+    v.reserve(buf.len() / 2);
+    for i in 0..buf.len() / 2 {
+        v.push(
+            (buf[2*i+1] as u16) << 8
+            | (buf[2*i+0] as u16)
+        )
+    }
+    return String::from_utf16_lossy(v.as_ref());
+}
+
+pub fn create_utf8_str(buf: &[u8]) -> String {
+    // String::from_utf8_lossy(buf).into_owned()
+    String::from_utf8(buf.to_owned()).unwrap_or(String::new())
 }
 
 pub fn get_url_field(buf: &[u8], pos: usize, size: u32, changes: &mut bool,
@@ -77,20 +114,20 @@ pub fn get_url_fields(buf: &[u8], pos: usize, size: u32, changes: &mut bool,
 }
 
 pub fn get_field(buf: &[u8], pos: usize, size: u32) -> String {
-    if size < 1 {
+    let buf = &buf[pos..][..size as usize];
+    if buf.len() < 1 {
         String::new()
-    } else if buf[pos] == 3 {
-        create_str(buf, pos + 1, size as usize - 1)
+    } else if buf[0] == 0 {
+        // ISO-8859-1
+        create_latin1_str(&buf[1..])
+    } else if buf[0] == 1 {
+        // UTF-16, requires a BOM
+        create_utf16_str(&buf[1..])
+    } else if buf[0] == 3 {
+        // UTF-8
+        create_utf8_str(&buf[1..])
     } else {
-        // if `c` == 0, it's supposed to be ISO-8859-1, `String` doesn't handle it.
-        let mut s = create_utf16_str(buf, pos + 1, size as usize - 1);
-        // It adds a '\u{feff}' character at the beginning of the string.
-        if let Some(c) = s.chars().next() {
-            if c == '\u{feff}' {
-                s.remove(0);
-            }
-        }
-        s
+        String::new()
     }
 }
 
