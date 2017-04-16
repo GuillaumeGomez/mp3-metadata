@@ -6,7 +6,7 @@ use std::time::Duration;
 use consts::{BITRATES, SAMPLING_FREQ};
 use enums::{ChannelType, Copyright, CRC, Emphasis, Error, Genre, Layer, Status, Version};
 use types::{AudioTag, Frame, MP3Metadata, OptionalAudioTags};
-use utils::{compute_duration, create_str, get_line, get_samp_line, get_text_field, get_text_fields};
+use utils::{compute_duration, create_utf8_str, get_line, get_samp_line, get_text_field, get_text_fields};
 use utils::{get_url_field, get_url_fields};
 
 fn get_id3(i: &mut u32, buf: &[u8], meta: &mut MP3Metadata) -> Result<(), Error> {
@@ -26,12 +26,11 @@ fn get_id3(i: &mut u32, buf: &[u8], meta: &mut MP3Metadata) -> Result<(), Error>
         *i += 126;
         // tag v1
         meta.tag = Some(AudioTag {
-            title: create_str(buf, x + 3, 30),
-            artist: create_str(buf, x + 33, 30),
-            album: create_str(buf, x + 63, 30),
-            year: create_str(buf, x + 93, 4).parse::<u16>().unwrap_or(0),
-            comment: create_str(buf, x + 97,
-                                if buf[x + 97 + 28] != 0 { 30 } else { 28 }),
+            title: create_utf8_str(&buf[x + 3..][..30]),
+            artist: create_utf8_str(&buf[x + 33..][..30]),
+            album: create_utf8_str(&buf[x + 63..][..30]),
+            year: create_utf8_str(&buf[x + 93..][..4]).parse::<u16>().unwrap_or(0),
+            comment: create_utf8_str(&buf[x + 97..][..if buf[x + 97 + 28] != 0 { 30 } else { 28 }]),
             genre: Genre::from(buf[x + 127]),
         });
         Ok(())
@@ -120,11 +119,11 @@ fn get_id3(i: &mut u32, buf: &[u8], meta: &mut MP3Metadata) -> Result<(), Error>
 
             // Frame name is 3 chars in pre-ID3v3 and 4 chars after
             let (frame_name, frame_size) = if maj_version < 3 {
-                (create_str(buf, pos, 3), (buf[pos + 5] as u32 & 0xFF) |
+                (create_utf8_str(&buf[pos..][..3]), (buf[pos + 5] as u32 & 0xFF) |
                                           ((buf[pos + 4] as u32 & 0xFF) << 8) |
                                           ((buf[pos + 3] as u32 & 0xFF) << 16))
             } else {
-                (create_str(buf, pos, 4), (buf[pos + 7] as u32 & 0xFF) |
+                (create_utf8_str(&buf[pos..][..4]), (buf[pos + 7] as u32 & 0xFF) |
                                           ((buf[pos + 6] as u32 & 0xFF) << 8) |
                                           ((buf[pos + 5] as u32 & 0xFF) << 16) |
                                           ((buf[pos + 4] as u32 & 0xFF) << 24))
