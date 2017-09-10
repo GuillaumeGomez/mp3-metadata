@@ -22,7 +22,7 @@ fn basic() {
         assert_eq!(frame.emphasis, mp3_metadata::Emphasis::None);
     }
     assert_eq!(meta.frames.len(), 478);
-    assert_eq!(meta.duration, Duration::new(12, 376000000));
+    assert_eq!(meta.duration, Duration::new(12, 434285248));
     assert_eq!(meta.tag, Some(mp3_metadata::AudioTag {
         title: "Test of MP3 File              ".to_owned(),
         artist: "Me                            ".to_owned(),

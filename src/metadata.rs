@@ -352,10 +352,10 @@ pub fn read_from_slice(buf: &[u8]) -> Result<MP3Metadata, Error> {
                         meta.frames.push(frame);
                         break 'a;
                     }
-                    c = buf[i as usize];
+                    let c2 = buf[i as usize];
 
-                    frame.chan_type = ChannelType::from(c & 0xC0);
-                    let (intensity, ms_stereo) = match (c & 0x30) >> 4 {
+                    frame.chan_type = ChannelType::from(c2 & 0xC0);
+                    let (intensity, ms_stereo) = match (c2 & 0x30) >> 4 {
                         0x10 => (true, false),
                         0x20 => (false, true),
                         0x30 => (true, true),
@@ -363,14 +363,18 @@ pub fn read_from_slice(buf: &[u8]) -> Result<MP3Metadata, Error> {
                     };
                     frame.intensity_stereo = intensity;
                     frame.ms_stereo = ms_stereo;
-                    frame.copyright = Copyright::from(c & 0x08);
-                    frame.status = Status::from(c & 0x04);
-                    frame.emphasis = Emphasis::from(c & 0x03);
+                    frame.copyright = Copyright::from(c2 & 0x08);
+                    frame.status = Status::from(c2 & 0x04);
+                    frame.emphasis = Emphasis::from(c2 & 0x03);
                     frame.duration = compute_duration(frame.version,
                                                       frame.layer,
                                                       frame.sampling_freq);
 
                     if let Some(dur) = frame.duration {
+                        if dur.subsec_nanos() != 26122448 || meta.frames.len() == 0 {
+                            println!("=> {} {} {:?} {:?} {:?} {:?}",
+                                     meta.frames.len(), (c & 0x0C) >> 2, frame.version, get_samp_line(frame.version), frame.sampling_freq, dur);
+                        }
                         meta.duration += dur;
                     }
 

@@ -8,11 +8,15 @@ pub fn compute_duration(v: Version, l: Layer, sample_rate: u16) -> Option<Durati
     if sample_rate == 0 {
         return None;
     }
-    Some(Duration::from_millis(match v {
-        Version::MPEG1 => SAMPLES_PER_FRAME[0][get_layer_value(l)] * 1000,
-        Version::MPEG2 | Version::MPEG2_5 => SAMPLES_PER_FRAME[1][get_layer_value(l)] * 1000,
+    let mut big = match v {
+        Version::MPEG1 => SAMPLES_PER_FRAME[0][get_layer_value(l)] as u64 * 1_000_000_000,
+        Version::MPEG2 | Version::MPEG2_5 => {
+            SAMPLES_PER_FRAME[1][get_layer_value(l)] as u64 * 1_000_000_000
+        }
         _ => return None,
-    } as u64 / sample_rate as u64))
+    };
+    big /= sample_rate as u64;
+    Some(Duration::new(big / 1_000_000_000, (big % 1_000_000_000) as u32))
 }
 
 pub fn get_line(v: Version, l: Layer) -> usize {
@@ -39,7 +43,7 @@ pub fn get_samp_line(v: Version) -> usize {
         Version::MPEG1 => 0,
         Version::MPEG2 => 1,
         Version::MPEG2_5 => 2,
-        _ => 3,
+        _ => 1,
     }
 }
 

@@ -11,3 +11,6 @@ keywords = ["mp3", "metadata"]
 
 [lib]
 name = "mp3_metadata"
+
+[dev-dependencies]
+reqwest = "0.7"
