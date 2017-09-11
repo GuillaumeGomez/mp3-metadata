@@ -325,9 +325,10 @@ pub fn read_from_slice(buf: &[u8]) -> Result<MP3Metadata, Error> {
                         if i < last.size {
                             return Err(Error::InvalidData);
                         }
-                        last.size = i - last.size;
+                        if last.size == 0 {
+                            last.size = i - last.size;
+                        }
                     }
-                    frame.size = i;
 
                     frame.version = Version::from((c & 0x18) >> 3);
                     frame.layer = Layer::from(c & 0x06);
@@ -344,8 +345,8 @@ pub fn read_from_slice(buf: &[u8]) -> Result<MP3Metadata, Error> {
                                                       frame.layer)][((c & 0xF0) >> 4) as usize];
                     frame.sampling_freq = SAMPLING_FREQ[get_samp_line(frame.version)]
                                                        [((c & 0x0C) >> 2) as usize];
-                    frame.slot = c & 0x02 == 0x02;
-                    frame.private_bit = c & 0x01 == 1;
+                    frame.slot = (c & 0x02) == 0x02;
+                    frame.private_bit = (c & 0x01) == 1;
 
                     i += 1;
                     if i >= buf.len() as u32 {
@@ -371,11 +372,29 @@ pub fn read_from_slice(buf: &[u8]) -> Result<MP3Metadata, Error> {
                                                       frame.sampling_freq);
 
                     if let Some(dur) = frame.duration {
-                        if dur.subsec_nanos() != 26122448 || meta.frames.len() == 0 {
-                            println!("=> {} {} {:?} {:?} {:?} {:?}",
-                                     meta.frames.len(), (c & 0x0C) >> 2, frame.version, get_samp_line(frame.version), frame.sampling_freq, dur);
-                        }
                         meta.duration += dur;
+                    }
+                    frame.size = if frame.layer == Layer::Layer1 && frame.sampling_freq > 0 {
+                        /*println!("{:4}: (12000 * {} / {} + {}) * 4 = {}", i, frame.bitrate as u64, frame.sampling_freq as u64,
+                            if frame.slot { 1 } else { 0 },
+                                (12000 * frame.bitrate as u64 / frame.sampling_freq as u64 +
+                            if frame.slot { 1 } else { 0 }) * 4);*/
+
+                        (12000 * frame.bitrate as u64 / frame.sampling_freq as u64 +
+                            if frame.slot { 1 } else { 0 }) * 4
+                    } else if (frame.layer == Layer::Layer2 || frame.layer == Layer::Layer3) && frame.sampling_freq > 0 {
+                        /*println!("{:4}: 144000 * {} / {} + {} = {}", i, frame.bitrate as u64, frame.sampling_freq as u64,
+                            if frame.slot { 1 } else { 0 },
+                                144000 * frame.bitrate as u64 / frame.sampling_freq as u64 +
+                            if frame.slot { 1 } else { 0 });*/
+
+                        144000 * frame.bitrate as u64 / frame.sampling_freq as u64 +
+                            if frame.slot { 1 } else { 0 }
+                    } else {
+                        0
+                    } as u32;
+                    if frame.size > 10 {
+                        i += (frame.size - 10);
                     }
 
                     meta.frames.push(frame);
@@ -397,7 +416,9 @@ pub fn read_from_slice(buf: &[u8]) -> Result<MP3Metadata, Error> {
             if i <= last.size {
                 return Err(Error::InvalidData);
             }
-            last.size = i - last.size - 1;
+            /*if last.size == 0 {
+                last.size = i - last.size - 1;
+            }*/
         }
     }
     if meta.frames.len() < 1 {

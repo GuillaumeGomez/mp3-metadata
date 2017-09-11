@@ -14,3 +14,4 @@ name = "mp3_metadata"
 
 [dev-dependencies]
 reqwest = "0.7"
+simplemad = "0.8"
