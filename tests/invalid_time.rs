@@ -15,15 +15,12 @@ fn invalid_time() {
     let mut decoder = simplemad::Decoder::decode(file).unwrap();
     let mut i = 0;
     let mut sum = Duration::new(0, 0);
+    let mut diff = 0;
     for decoding_result in decoder {
         match decoding_result {
             Err(e) => {
-                if i >= meta.frames.len() {
-                    println!("==> {} > {}", i, meta.frames.len());
-                    i += 1;
-                    continue
-                }
-                println!("Error: {:?} {:?}", e, meta.frames[i]);
+                //println!("Error: {:?} {:?}", e, meta.frames[i]);
+                diff += 1;
             },
             Ok(frame) => {
                 if i >= meta.frames.len() {
@@ -31,21 +28,17 @@ fn invalid_time() {
                     i += 1;
                     continue
                 }
-                let mut issue = false;
                 if meta.frames[i].sampling_freq as u32 != frame.sample_rate {
                     println!("[{}] [SAMPLE_RATE] {} != {}", i, meta.frames[i].sampling_freq, frame.sample_rate);
-                    issue = true;
                 }
                 if meta.frames[i].bitrate as u32 * 1000 != frame.bit_rate {
                     println!("[{}] [BIT_RATE] {} != {}", i, meta.frames[i].bitrate as u32 * 1000, frame.bit_rate);
-                    issue = true;
                 }
                 if meta.frames[i].duration.unwrap() != frame.duration {
                     println!("[{}] [DURATION] {:?} != {:?}", i, meta.frames[i].duration, frame.duration);
-                    issue = true;
                 }
-                if issue {
-                    println!("{:?}", frame.position);
+                if meta.frames[i].position != frame.position {
+                    println!("[{}] [POSITION] {:?} != {:?}", i, meta.frames[i].position, frame.position);
                 }
                 sum += frame.duration;
             },

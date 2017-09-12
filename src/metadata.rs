@@ -303,113 +303,93 @@ pub fn read_from_slice(buf: &[u8]) -> Result<MP3Metadata, Error> {
     let mut i = 0u32;
 
     'a: while i < buf.len() as u32 {
-        let mut c;
         let mut frame: Frame = Default::default();
         loop {
             if let Err(e) = get_id3(&mut i, buf, &mut meta) {
                 return Err(e);
             }
-            i += 1;
+            i += 4;
             if i >= buf.len() as u32 {
                 break 'a;
             }
-            c = buf[i as usize];
-            if c == 0xFF {
-                i += 1;
-                if i >= buf.len() as u32 {
-                    break 'a;
+            let header = ((buf[i as usize - 3] as u32) << 24 | (buf[i as usize - 2] as u32) << 16 |
+                          (buf[i as usize - 1] as u32) << 8 | buf[i as usize] as u32);
+            if header & 0xffe00000 == 0xffe00000 && header & (3 << 17) != 0 &&
+               header & (0xf << 12) != (0xf << 12) && header & (3 << 10) != (3 << 10) {
+                if let Some(last) = meta.frames.last_mut() {
+                    if i < last.size {
+                        return Err(Error::InvalidData);
+                    }
+                    if last.size == 0 {
+                        last.size = i - last.size;
+                    }
                 }
-                c = buf[i as usize];
-                if c == 0xFA || c == 0xFB {
-                    if let Some(last) = meta.frames.last_mut() {
-                        if i < last.size {
-                            return Err(Error::InvalidData);
-                        }
-                        if last.size == 0 {
-                            last.size = i - last.size;
-                        }
-                    }
 
-                    frame.version = Version::from((c & 0x18) >> 3);
-                    frame.layer = Layer::from(c & 0x06);
-                    frame.crc = CRC::from(c & 0x01);
+                frame.version = Version::from((header >> 19) & 3);
+                frame.layer = Layer::from((header >> 17) & 3);
+                frame.crc = CRC::from((header >> 16) & 1);
 
-                    i += 1;
-                    if i >= buf.len() as u32 {
-                        meta.frames.push(frame);
-                        break 'a;
-                    }
-                    c = buf[i as usize];
+                frame.bitrate = BITRATES[get_line(frame.version, frame.layer)]
+                                        [((header >> 12) & 0xF) as usize];
+                frame.sampling_freq = SAMPLING_FREQ[get_samp_line(frame.version)]
+                                                   [((header >> 10) & 0x3) as usize];
+                frame.slot = (header >> 9) & 1 == 1;
+                frame.private_bit = (header >> 8) & 1 == 1;
 
-                    frame.bitrate = BITRATES[get_line(frame.version,
-                                                      frame.layer)][((c & 0xF0) >> 4) as usize];
-                    frame.sampling_freq = SAMPLING_FREQ[get_samp_line(frame.version)]
-                                                       [((c & 0x0C) >> 2) as usize];
-                    frame.slot = (c & 0x02) == 0x02;
-                    frame.private_bit = (c & 0x01) == 1;
+                frame.chan_type = ChannelType::from((header >> 4) & 3);
+                let (intensity, ms_stereo) = match (header >> 2) & 3 {
+                    0x1 => (true, false),
+                    0x2 => (false, true),
+                    0x3 => (true, true),
+                    /*0x00*/ _ => (false, false),
+                };
+                frame.intensity_stereo = intensity;
+                frame.ms_stereo = ms_stereo;
+                frame.copyright = Copyright::from((header >> 3) & 1);
+                frame.status = Status::from((header >> 2) & 1);
+                frame.emphasis = Emphasis::from(header & 0x03);
+                frame.duration = compute_duration(frame.version,
+                                                  frame.layer,
+                                                  frame.sampling_freq);
+                frame.position = meta.duration;
 
-                    i += 1;
-                    if i >= buf.len() as u32 {
-                        meta.frames.push(frame);
-                        break 'a;
-                    }
-                    let c2 = buf[i as usize];
-
-                    frame.chan_type = ChannelType::from(c2 & 0xC0);
-                    let (intensity, ms_stereo) = match (c2 & 0x30) >> 4 {
-                        0x10 => (true, false),
-                        0x20 => (false, true),
-                        0x30 => (true, true),
-                        /*0x00*/ _ => (false, false),
-                    };
-                    frame.intensity_stereo = intensity;
-                    frame.ms_stereo = ms_stereo;
-                    frame.copyright = Copyright::from(c2 & 0x08);
-                    frame.status = Status::from(c2 & 0x04);
-                    frame.emphasis = Emphasis::from(c2 & 0x03);
-                    frame.duration = compute_duration(frame.version,
-                                                      frame.layer,
-                                                      frame.sampling_freq);
-
-                    if let Some(dur) = frame.duration {
-                        meta.duration += dur;
-                    }
-                    frame.size = if frame.layer == Layer::Layer1 && frame.sampling_freq > 0 {
-                        /*println!("{:4}: (12000 * {} / {} + {}) * 4 = {}", i, frame.bitrate as u64, frame.sampling_freq as u64,
-                            if frame.slot { 1 } else { 0 },
-                                (12000 * frame.bitrate as u64 / frame.sampling_freq as u64 +
-                            if frame.slot { 1 } else { 0 }) * 4);*/
-
-                        (12000 * frame.bitrate as u64 / frame.sampling_freq as u64 +
-                            if frame.slot { 1 } else { 0 }) * 4
-                    } else if (frame.layer == Layer::Layer2 || frame.layer == Layer::Layer3) && frame.sampling_freq > 0 {
-                        /*println!("{:4}: 144000 * {} / {} + {} = {}", i, frame.bitrate as u64, frame.sampling_freq as u64,
-                            if frame.slot { 1 } else { 0 },
-                                144000 * frame.bitrate as u64 / frame.sampling_freq as u64 +
-                            if frame.slot { 1 } else { 0 });*/
-
-                        144000 * frame.bitrate as u64 / frame.sampling_freq as u64 +
-                            if frame.slot { 1 } else { 0 }
-                    } else {
-                        0
-                    } as u32;
-                    if frame.size > 10 {
-                        i += (frame.size - 10);
-                    }
-
-                    meta.frames.push(frame);
-                    break;
+                if let Some(dur) = frame.duration {
+                    meta.duration += dur;
                 }
-            } else {
-                if let Err(e) = get_id3(&mut i, buf, &mut meta) {
-                    return Err(e);
+                frame.size = if frame.layer == Layer::Layer1 && frame.sampling_freq > 0 {
+                    /*println!("{:4}: (12000 * {} / {} + {}) * 4 = {}", i, frame.bitrate as u64, frame.sampling_freq as u64,
+                        if frame.slot { 1 } else { 0 },
+                            (12000 * frame.bitrate as u64 / frame.sampling_freq as u64 +
+                        if frame.slot { 1 } else { 0 }) * 4);*/
+
+                    (12000 * frame.bitrate as u64 / frame.sampling_freq as u64 +
+                        if frame.slot { 1 } else { 0 }) * 4
+                } else if (frame.layer == Layer::Layer2 || frame.layer == Layer::Layer3) && frame.sampling_freq > 0 {
+                    /*println!("{:4}: 144000 * {} / {} + {} = {}", i, frame.bitrate as u64, frame.sampling_freq as u64,
+                        if frame.slot { 1 } else { 0 },
+                            144000 * frame.bitrate as u64 / frame.sampling_freq as u64 +
+                        if frame.slot { 1 } else { 0 });*/
+
+                    144000 * frame.bitrate as u64 / frame.sampling_freq as u64 +
+                        if frame.slot { 1 } else { 0 }
+                } else {
+                    continue 'a;
+                } as u32;
+                if frame.size > 4 {
+                    i += frame.size - 4;
                 }
-                if i >= buf.len() as u32 {
-                    break 'a;
-                }
+
+                meta.frames.push(frame);
+                continue 'a;
+            }
+            i -= 3;
+            if let Err(e) = get_id3(&mut i, buf, &mut meta) {
+                return Err(e);
+            }
+            if i >= buf.len() as u32 {
+                break 'a;
             }
         }
-        i += 1;
     }
     if meta.tag.is_none() {
         if let Some(last) = meta.frames.last_mut() {

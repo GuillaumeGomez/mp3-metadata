@@ -19,6 +19,7 @@ pub struct Frame {
     pub status: Status,
     pub emphasis: Emphasis,
     pub duration: Option<Duration>,
+    pub position: Duration,
 }
 
 #[derive(Debug, PartialEq)]

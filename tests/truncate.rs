@@ -3,7 +3,7 @@ extern crate mp3_metadata;
 use std::time::Duration;
 
 #[test]
-fn basic() {
+fn truncate() {
     let meta = mp3_metadata::read_from_file("assets/trunc_test.mp3").expect("File error");
     if let Some(frame) = meta.frames.first() {
         assert_eq!(frame.size, 418);
