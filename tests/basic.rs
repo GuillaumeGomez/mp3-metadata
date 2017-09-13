@@ -42,13 +42,13 @@ fn basic() {
         i += 1;
     }
     if let Some(frame) = meta.frames.first() {
-        assert_eq!(frame.size, 418, "frame size");
+        assert_eq!(frame.size, 417, "frame size");
         assert_eq!(frame.version, mp3_metadata::Version::MPEG1, "version");
         assert_eq!(frame.layer, mp3_metadata::Layer::Layer3, "layer");
         assert_eq!(frame.crc, mp3_metadata::CRC::Added, "crc");
         assert_eq!(frame.bitrate, 128, "bitrate");
         assert_eq!(frame.sampling_freq, 44100, "sampling freq");
-        assert_eq!(frame.slot, true, "slot");
+        assert_eq!(frame.padding, false, "padding");
         assert_eq!(frame.private_bit, false, "private bit");
         assert_eq!(frame.chan_type, mp3_metadata::ChannelType::Stereo, "channel type");
         assert_eq!(frame.intensity_stereo, false, "intensity stereo");
@@ -57,8 +57,8 @@ fn basic() {
         assert_eq!(frame.status, mp3_metadata::Status::Copy, "status");
         assert_eq!(frame.emphasis, mp3_metadata::Emphasis::None, "emphasis");
     }
-    assert_eq!(meta.frames.len(), 474, "number of frames");
-    assert_eq!(meta.duration, Duration::new(12, 382040352), "duration");
+    assert_eq!(meta.frames.len(), 475, "number of frames");
+    assert_eq!(meta.duration, Duration::new(12, 408162800), "duration");
     assert_eq!(meta.tag, Some(mp3_metadata::AudioTag {
         title: "Test of MP3 File              ".to_owned(),
         artist: "Me                            ".to_owned(),
