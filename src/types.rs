@@ -10,7 +10,7 @@ pub struct Frame {
     pub crc: CRC,
     pub bitrate: u16,
     pub sampling_freq: u16,
-    pub slot: bool, // slot to adjust bitrate
+    pub padding: bool,
     pub private_bit: bool,
     pub chan_type: ChannelType,
     pub intensity_stereo: bool,
@@ -19,6 +19,7 @@ pub struct Frame {
     pub status: Status,
     pub emphasis: Emphasis,
     pub duration: Option<Duration>,
+    pub position: Duration,
 }
 
 #[derive(Debug, PartialEq)]

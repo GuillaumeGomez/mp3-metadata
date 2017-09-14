@@ -45,14 +45,14 @@ impl Default for Version {
     }
 }
 
-impl From<u8> for Version {
-    fn from(c: u8) -> Version {
+impl From<u32> for Version {
+    fn from(c: u32) -> Version {
         match c {
             0x00 => Version::MPEG2_5,
             0x01 => Version::Reserved,
             0x02 => Version::MPEG2,
             0x03 => Version::MPEG1,
-            _ => Version::Unknown,
+            _ => unreachable!(),
         }
     }
 }
@@ -72,14 +72,14 @@ impl Default for Layer {
     }
 }
 
-impl From<u8> for Layer {
-    fn from(c: u8) -> Layer {
+impl From<u32> for Layer {
+    fn from(c: u32) -> Layer {
         match c {
-            0x00 => Layer::Reserved,
-            0x02 => Layer::Layer3,
-            0x04 => Layer::Layer2,
-            0x06 => Layer::Layer1,
-            _ => Layer::Unknown,
+            0x0 => Layer::Reserved,
+            0x1 => Layer::Layer3,
+            0x2 => Layer::Layer2,
+            0x3 => Layer::Layer1,
+            _ => unreachable!(),
         }
     }
 }
@@ -98,8 +98,8 @@ impl Default for CRC {
     }
 }
 
-impl From<u8> for CRC {
-    fn from(c: u8) -> CRC {
+impl From<u32> for CRC {
+    fn from(c: u32) -> CRC {
         match c {
             0x00 => CRC::Added,
             0x01 => CRC::NotAdded,
@@ -123,14 +123,14 @@ impl Default for ChannelType {
     }
 }
 
-impl From<u8> for ChannelType {
-    fn from(c: u8) -> ChannelType {
+impl From<u32> for ChannelType {
+    fn from(c: u32) -> ChannelType {
         match c {
-            0x00 => ChannelType::Stereo,
-            0x40 => ChannelType::JointStereo,
-            0x80 => ChannelType::DualChannel,
-            0xC0 => ChannelType::SingleChannel,
-            _ => ChannelType::Unknown,
+            0x0 => ChannelType::Stereo,
+            0x1 => ChannelType::JointStereo,
+            0x2 => ChannelType::DualChannel,
+            0x3 => ChannelType::SingleChannel,
+            _ => unreachable!(),
         }
     }
 }
@@ -147,11 +147,12 @@ impl Default for Copyright {
     }
 }
 
-impl From<u8> for Copyright {
-    fn from(c: u8) -> Copyright {
+impl From<u32> for Copyright {
+    fn from(c: u32) -> Copyright {
         match c {
-            0x00 => Copyright::None,
-            /*0x08*/ _ => Copyright::Some,
+            0x0 => Copyright::None,
+            0x1 => Copyright::Some,
+            _   => unreachable!(),
         }
     }
 }
@@ -169,12 +170,12 @@ impl Default for Status {
     }
 }
 
-impl From<u8> for Status {
-    fn from(c: u8) -> Status {
+impl From<u32> for Status {
+    fn from(c: u32) -> Status {
         match c {
-            0x00 => Status::Copy,
-            0x04 => Status::Original,
-            _ => Status::Unknown,
+            0x0 => Status::Copy,
+            0x1 => Status::Original,
+            _   => unreachable!(),
         }
     }
 }
@@ -198,14 +199,14 @@ impl Default for Emphasis {
     }
 }
 
-impl From<u8> for Emphasis {
-    fn from(c: u8) -> Emphasis {
+impl From<u32> for Emphasis {
+    fn from(c: u32) -> Emphasis {
         match c {
-            0 => Emphasis::None,
-            1 => Emphasis::MicroSeconds,
-            2 => Emphasis::Reserved,
-            3 => Emphasis::CCITT,
-            _ => Emphasis::Unknown,
+            0x0 => Emphasis::None,
+            0x1 => Emphasis::MicroSeconds,
+            0x2 => Emphasis::Reserved,
+            0x3 => Emphasis::CCITT,
+            _   => unreachable!(),
         }
     }
 }
