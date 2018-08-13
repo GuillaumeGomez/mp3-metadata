@@ -65,8 +65,9 @@ fn get_id3(i: &mut u32, buf: &[u8], meta: &mut MP3Metadata) -> Result<(), Error>
             }
             x += header_size as usize - 4;
         }
+
+        *i = x as u32 + tag_size as u32;
         if x + tag_size >= buf.len() {
-            *i = x as u32 + tag_size as u32;
             return Ok(())
         }
 
