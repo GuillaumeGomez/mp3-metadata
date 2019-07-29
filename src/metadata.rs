@@ -12,7 +12,12 @@ use utils::{get_url_field, get_url_fields};
 fn get_id3(i: &mut u32, buf: &[u8], meta: &mut MP3Metadata) -> Result<(), Error> {
     let mut x = *i as usize;
     // Get extended information
-    if buf.len() > 127 && x + 127 < buf.len() && // V1
+    if buf.len() > 32 && x + 32 < buf.len() && // APE
+       buf[x] == 'A' as u8 && buf[x + 1] == 'P' as u8 && buf[x + 2] == 'E' as u8 && buf[x + 3] == 'T' as u8 &&
+       buf[x + 4] == 'A' as u8 && buf[x + 5] == 'G' as u8 && buf[x + 6] == 'E' as u8 && buf[x + 7] == 'X' as u8 {
+           *i += 31; // skip APE header / footer
+           Ok(())
+    } else if buf.len() > 127 && x + 127 < buf.len() && // V1
        buf[x] == 'T' as u8 && buf[x + 1] == 'A' as u8 && buf[x + 2] == 'G' as u8 {
         if meta.tag.is_some() {
             return Err(Error::DuplicatedIDV3);
