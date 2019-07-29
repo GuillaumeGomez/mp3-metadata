@@ -123,11 +123,16 @@ fn get_id3(i: &mut u32, buf: &[u8], meta: &mut MP3Metadata) -> Result<(), Error>
                 (create_utf8_str(&buf[pos..][..3]), (buf[pos + 5] as u32 & 0xFF) |
                                           ((buf[pos + 4] as u32 & 0xFF) << 8) |
                                           ((buf[pos + 3] as u32 & 0xFF) << 16))
-            } else {
+            } else if maj_version < 4 {
                 (create_utf8_str(&buf[pos..][..4]), (buf[pos + 7] as u32 & 0xFF) |
                                           ((buf[pos + 6] as u32 & 0xFF) << 8) |
                                           ((buf[pos + 5] as u32 & 0xFF) << 16) |
                                           ((buf[pos + 4] as u32 & 0xFF) << 24))
+            } else {
+                (create_utf8_str(&buf[pos..][..4]), (buf[pos + 7] as u32 & 0xFF) |
+                                          ((buf[pos + 6] as u32 & 0xFF) << 7) |
+                                          ((buf[pos + 5] as u32 & 0xFF) << 14) |
+                                          ((buf[pos + 4] as u32 & 0xFF) << 21))
             };
 
             pos += id3_frame_size;
