@@ -55,8 +55,9 @@ fn get_id3(i: &mut u32, buf: &[u8], meta: &mut MP3Metadata) -> Result<(), Error>
         let use_sync = buf[x + 5] & 0x80 != 0;
         let has_extended_header = buf[x + 5] & 0x40 != 0;
 
+        x += 10;
+
         if has_extended_header {
-            x += 10;
             if x + 4 >= buf.len() {
                 *i = x as u32;
                 return Ok(())
