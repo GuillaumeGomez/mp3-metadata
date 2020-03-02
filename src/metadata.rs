@@ -309,8 +309,8 @@ fn read_header(buf: &[u8], i: &mut u32, meta: &mut MP3Metadata) -> Result<bool, 
         frame.padding = (header >> 9) & 1 == 1;
         frame.private_bit = (header >> 8) & 1 == 1;
 
-        frame.chan_type = ChannelType::from((header >> 4) & 3);
-        let (intensity, ms_stereo) = match (header >> 2) & 3 {
+        frame.chan_type = ChannelType::from((header >> 6) & 3);
+        let (intensity, ms_stereo) = match (header >> 4) & 3 {
             0x1 => (true, false),
             0x2 => (false, true),
             0x3 => (true, true),

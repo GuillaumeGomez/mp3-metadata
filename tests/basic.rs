@@ -50,7 +50,7 @@ fn basic() {
         assert_eq!(frame.sampling_freq, 44100, "sampling freq");
         assert_eq!(frame.padding, false, "padding");
         assert_eq!(frame.private_bit, false, "private bit");
-        assert_eq!(frame.chan_type, mp3_metadata::ChannelType::Stereo, "channel type");
+        assert_eq!(frame.chan_type, mp3_metadata::ChannelType::SingleChannel, "channel type");
         assert_eq!(frame.intensity_stereo, false, "intensity stereo");
         assert_eq!(frame.ms_stereo, false, "ms stereo");
         assert_eq!(frame.copyright, mp3_metadata::Copyright::None, "copyright");
