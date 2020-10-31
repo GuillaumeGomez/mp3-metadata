@@ -153,7 +153,7 @@ impl From<u32> for Copyright {
         match c {
             0x0 => Copyright::None,
             0x1 => Copyright::Some,
-            _   => unreachable!(),
+            _ => unreachable!(),
         }
     }
 }
@@ -176,7 +176,7 @@ impl From<u32> for Status {
         match c {
             0x0 => Status::Copy,
             0x1 => Status::Original,
-            _   => unreachable!(),
+            _ => unreachable!(),
         }
     }
 }
@@ -207,7 +207,7 @@ impl From<u32> for Emphasis {
             0x1 => Emphasis::MicroSeconds,
             0x2 => Emphasis::Reserved,
             0x3 => Emphasis::CCITT,
-            _   => unreachable!(),
+            _ => unreachable!(),
         }
     }
 }
