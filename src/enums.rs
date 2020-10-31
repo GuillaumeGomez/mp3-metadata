@@ -1,6 +1,4 @@
-use std::convert::From;
-use std::default::Default;
-use std;
+use std::{convert::From, default::Default, error, fmt};
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub enum Error {
@@ -11,13 +9,13 @@ pub enum Error {
     InvalidData,
 }
 
-impl std::fmt::Display for Error {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
-        (self as &std::error::Error).description().fmt(f)
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+        (self as &dyn error::Error).description().fmt(f)
     }
 }
 
-impl std::error::Error for Error {
+impl error::Error for Error {
     fn description(&self) -> &str {
         match *self {
             Error::FileError => "An I/O error occurred",
@@ -152,7 +150,7 @@ impl From<u32> for Copyright {
         match c {
             0x0 => Copyright::None,
             0x1 => Copyright::Some,
-            _   => unreachable!(),
+            _ => unreachable!(),
         }
     }
 }
@@ -175,7 +173,7 @@ impl From<u32> for Status {
         match c {
             0x0 => Status::Copy,
             0x1 => Status::Original,
-            _   => unreachable!(),
+            _ => unreachable!(),
         }
     }
 }
@@ -206,7 +204,7 @@ impl From<u32> for Emphasis {
             0x1 => Emphasis::MicroSeconds,
             0x2 => Emphasis::Reserved,
             0x3 => Emphasis::CCITT,
-            _   => unreachable!(),
+            _ => unreachable!(),
         }
     }
 }
@@ -490,5 +488,24 @@ impl From<u8> for Genre {
             125 => Genre::DanceHall,
             _ => Genre::Unknown,
         }
+    }
+}
+
+impl fmt::Display for Genre {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Self::Something(s) => write!(f, "{}", s),
+            _ => fmt::Debug::fmt(self, f),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn fmt_genre() {
+        assert_eq!(Genre::Club.to_string(), "Club");
+        assert_eq!(Genre::Something("Foo".to_string()).to_string(), "Foo");
     }
 }
