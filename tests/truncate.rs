@@ -1,5 +1,3 @@
-extern crate mp3_metadata;
-
 use std::time::Duration;
 
 #[test]

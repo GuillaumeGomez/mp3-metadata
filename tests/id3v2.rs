@@ -1,5 +1,3 @@
-extern crate mp3_metadata;
-
 #[test]
 fn id3v2() {
     let meta = mp3_metadata::read_from_file("assets/id3v2.mp3").expect("File error");

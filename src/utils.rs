@@ -1,8 +1,9 @@
+use crate::{
+    consts::SAMPLES_PER_FRAME,
+    enums::{Layer, Version},
+    types::Url,
+};
 use std::time::Duration;
-
-use consts::SAMPLES_PER_FRAME;
-use enums::{Layer, Version};
-use types::Url;
 
 pub fn compute_duration(v: Version, l: Layer, sample_rate: u16) -> Option<Duration> {
     if sample_rate == 0 {

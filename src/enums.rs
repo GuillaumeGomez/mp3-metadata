@@ -1,7 +1,4 @@
-use std;
-use std::convert::From;
-use std::default::Default;
-use std::fmt;
+use std::{convert::From, default::Default, error, fmt};
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub enum Error {
@@ -12,13 +9,13 @@ pub enum Error {
     InvalidData,
 }
 
-impl std::fmt::Display for Error {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
-        (self as &std::error::Error).description().fmt(f)
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+        (self as &dyn error::Error).description().fmt(f)
     }
 }
 
-impl std::error::Error for Error {
+impl error::Error for Error {
     fn description(&self) -> &str {
         match *self {
             Error::FileError => "An I/O error occurred",

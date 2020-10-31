@@ -2,12 +2,11 @@
 name = "mp3-metadata"
 version = "0.3.3"
 authors = ["Guillaume Gomez <guillaume1.gomez@gmail.com>"]
-
 description = "Metadata parser for MP3 files"
 repository = "https://github.com/GuillaumeGomez/mp3-metadata"
 license = "MIT"
-
 keywords = ["mp3", "metadata"]
+edition = "2018"
 
 [lib]
 name = "mp3_metadata"

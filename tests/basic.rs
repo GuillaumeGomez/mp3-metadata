@@ -1,9 +1,5 @@
-extern crate mp3_metadata;
-extern crate simplemad;
-
-use std::time::Duration;
-
 use std::fs::File;
+use std::time::Duration;
 
 #[test]
 fn basic() {

@@ -1,8 +1,4 @@
-extern crate reqwest;
-
-use std::fs::File;
-use std::io::prelude::*;
-use std::path::Path;
+use std::{fs::File, io::prelude::*, path::Path};
 
 pub fn get_file<P: AsRef<Path>>(p: P) {
     let p = p.as_ref();
