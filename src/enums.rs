@@ -1,6 +1,6 @@
-use std;
 use std::convert::From;
 use std::default::Default;
+use std::fmt;
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum Error {
@@ -11,8 +11,8 @@ pub enum Error {
     InvalidData,
 }
 
-impl std::fmt::Display for Error {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let err = match *self {
             Error::FileError => "An I/O error occurred",
             Error::NotMP3 => "The file is not a valid MP3 file",
@@ -485,5 +485,24 @@ impl From<u8> for Genre {
             125 => Genre::DanceHall,
             _ => Genre::Unknown,
         }
+    }
+}
+
+impl fmt::Display for Genre {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Self::Something(s) => write!(f, "{}", s),
+            _ => fmt::Debug::fmt(self, f),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn fmt_genre() {
+        assert_eq!(Genre::Club.to_string(), "Club");
+        assert_eq!(Genre::Something("Foo".to_string()).to_string(), "Foo");
     }
 }
