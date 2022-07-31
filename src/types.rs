@@ -20,6 +20,7 @@ pub struct Frame {
     pub emphasis: Emphasis,
     pub duration: Option<Duration>,
     pub position: Duration,
+    pub offset: u32,
 }
 
 #[derive(Debug, Eq, PartialEq)]
