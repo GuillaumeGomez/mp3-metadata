@@ -95,7 +95,7 @@ pub struct OptionalAudioTags {
     /// The 'Lyricist(s)/Text writer(s)' frame is intended for the writer(s) of the text
     /// or lyrics in the recording.
     pub text_writers: Vec<String>,
-    ///     The 'File type' frame indicates which type of audio this tag defines. The
+    /// The 'File type' frame indicates which type of audio this tag defines. The
     /// following type and refinements are defined:
     ///
     /// * MPG       MPEG Audio
