@@ -9,7 +9,7 @@ pub fn get_file<P: AsRef<Path>>(p: P) {
     if p.exists() {
         return;
     }
-    let mut resp = reqwest::get(&format!("https://guillaume-gomez.fr/rust-test/{}",
+    let mut resp = reqwest::blocking::get(&format!("https://guillaume-gomez.fr/rust-test/{}",
                                          p.file_name()
                                           .expect("file_name() failed")
                                           .to_str()
