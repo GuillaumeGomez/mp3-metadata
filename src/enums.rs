@@ -2,7 +2,7 @@ use std::convert::From;
 use std::default::Default;
 use std;
 
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum Error {
     FileError,
     NotMP3,
@@ -12,25 +12,21 @@ pub enum Error {
 }
 
 impl std::fmt::Display for Error {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
-        (self as &std::error::Error).description().fmt(f)
-    }
-}
-
-impl std::error::Error for Error {
-    fn description(&self) -> &str {
-        match *self {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        let err = match *self {
             Error::FileError => "An I/O error occurred",
             Error::NotMP3 => "The file is not a valid MP3 file",
             Error::NoHeader => "The file is missing an MP3 header",
             Error::DuplicatedIDV3 => "The MP3 file contains a duplicate IDv3 frame",
             Error::InvalidData => "The MP3 metadata is invalid",
-        }
+        };
+        err.fmt(f)
     }
 }
 
+
 #[allow(non_camel_case_types)]
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum Version {
     Reserved,
     MPEG1,
@@ -57,7 +53,7 @@ impl From<u32> for Version {
     }
 }
 
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum Layer {
     Reserved,
     Layer1,
@@ -84,7 +80,7 @@ impl From<u32> for Layer {
     }
 }
 
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum CRC {
     /// Redundancy added.
     Added,
@@ -108,7 +104,7 @@ impl From<u32> for CRC {
     }
 }
 
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum ChannelType {
     Stereo,
     JointStereo,
@@ -135,7 +131,7 @@ impl From<u32> for ChannelType {
     }
 }
 
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum Copyright {
     None,
     Some,
@@ -157,7 +153,7 @@ impl From<u32> for Copyright {
     }
 }
 
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum Status {
     Copy,
     Original,
@@ -180,7 +176,7 @@ impl From<u32> for Status {
     }
 }
 
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum Emphasis {
     /// No emphasis
     None,
@@ -211,7 +207,7 @@ impl From<u32> for Emphasis {
     }
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub enum Genre {
     Blues,
     ClassicRock,

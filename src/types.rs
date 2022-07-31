@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use enums::{ChannelType, Copyright, CRC, Emphasis, Genre, Layer, Status, Version};
 
-#[derive(Debug, Default, PartialEq)]
+#[derive(Debug, Default, Eq, PartialEq)]
 pub struct Frame {
     pub size: u32,
     pub version: Version,
@@ -22,7 +22,7 @@ pub struct Frame {
     pub position: Duration,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Eq, PartialEq)]
 pub struct MP3Metadata {
     pub duration: Duration,
     pub frames: Vec<Frame>,
@@ -30,7 +30,7 @@ pub struct MP3Metadata {
     pub optional_info: Vec<OptionalAudioTags>,
 }
 
-#[derive(Debug, Default, PartialEq)]
+#[derive(Debug, Default, Eq, PartialEq)]
 pub struct AudioTag {
     pub title: String,
     pub artist: String,
@@ -40,12 +40,12 @@ pub struct AudioTag {
     pub genre: Genre,
 }
 
-#[derive(Debug, Default, PartialEq)]
+#[derive(Debug, Default, Eq, PartialEq)]
 pub struct Url(pub String);
 
 // TODO: Add picture support
 /// id3.org/id3v2.3.0#Declared_ID3v2_frames#Text_information_frames_-_details
-#[derive(Debug, Default, PartialEq)]
+#[derive(Debug, Default, Eq, PartialEq)]
 pub struct OptionalAudioTags {
     /// Corresponds to the nth frames `MP3Metadata.frame`.
     pub position: u32,
