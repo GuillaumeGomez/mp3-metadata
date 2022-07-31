@@ -14,15 +14,12 @@ use utils::{get_url_field, get_url_fields};
 fn get_id3(i: &mut u32, buf: &[u8], meta: &mut MP3Metadata) -> Result<(), Error> {
     let mut x = *i as usize;
     // Get extended information
-    if buf.len() > 32 && x + 32 < buf.len() && // APE
-       buf[x] == b'A' && buf[x + 1] == b'P' && buf[x + 2] == b'E' && buf[x + 3] == b'T' &&
-       buf[x + 4] == b'A' && buf[x + 5] == b'G' && buf[x + 6] == b'E' && buf[x + 7] == b'X'
-    {
+    if buf.len() > 32 && x + 32 < buf.len() && &buf[x..x + 8] == b"APETAGEX" {
+        // APE
         *i += 31; // skip APE header / footer
         Ok(())
-    } else if buf.len() > 127 && x + 127 < buf.len() && // V1
-       buf[x] == b'T' && buf[x + 1] == b'A' && buf[x + 2] == b'G'
-    {
+    } else if buf.len() > 127 && x + 127 < buf.len() && &buf[x..x + 3] == b"TAG" {
+        // V1
         if meta.tag.is_some() {
             return Err(Error::DuplicatedIDV3);
         }
@@ -45,9 +42,8 @@ fn get_id3(i: &mut u32, buf: &[u8], meta: &mut MP3Metadata) -> Result<(), Error>
             genre: Genre::from(buf[x + 127]),
         });
         Ok(())
-    } else if buf.len() > x + 13 && // V2 and above
-              buf[x] == b'I' && buf[x + 1] == b'D' && buf[x + 2] == b'3'
-    {
+    } else if buf.len() > x + 13 && &buf[x..x + 3] == b"ID3" {
+        // V2 and above
         let maj_version = buf[x + 3];
         let min_version = buf[x + 4];
 
@@ -127,21 +123,23 @@ fn get_id3(i: &mut u32, buf: &[u8], meta: &mut MP3Metadata) -> Result<(), Error>
             }
 
             // Check if there is there a frame.
-            if buf[pos] < b'A' || buf[pos] > b'Z' {
+            let c = buf[pos];
+            #[allow(clippy::manual_range_contains)]
+            if c < b'A' || c > b'Z' {
                 break;
             }
 
             // Frame name is 3 chars in pre-ID3v3 and 4 chars after
             let (frame_name, frame_size) = if maj_version < 3 {
                 (
-                    create_utf8_str(&buf[pos..][..3]),
+                    &buf[pos..pos + 3],
                     (buf[pos + 5] as u32 & 0xFF)
                         | ((buf[pos + 4] as u32 & 0xFF) << 8)
                         | ((buf[pos + 3] as u32 & 0xFF) << 16),
                 )
             } else if maj_version < 4 {
                 (
-                    create_utf8_str(&buf[pos..][..4]),
+                    &buf[pos..pos + 4],
                     (buf[pos + 7] as u32 & 0xFF)
                         | ((buf[pos + 6] as u32 & 0xFF) << 8)
                         | ((buf[pos + 5] as u32 & 0xFF) << 16)
@@ -149,7 +147,7 @@ fn get_id3(i: &mut u32, buf: &[u8], meta: &mut MP3Metadata) -> Result<(), Error>
                 )
             } else {
                 (
-                    create_utf8_str(&buf[pos..][..4]),
+                    &buf[pos..pos + 4],
                     (buf[pos + 7] as u32 & 0xFF)
                         | ((buf[pos + 6] as u32 & 0xFF) << 7)
                         | ((buf[pos + 5] as u32 & 0xFF) << 14)
@@ -163,16 +161,16 @@ fn get_id3(i: &mut u32, buf: &[u8], meta: &mut MP3Metadata) -> Result<(), Error>
             }
 
             // http://id3.org/id3v2.3.0#Declared_ID3v2_frames
-            match &frame_name[..] {
+            match frame_name {
                 // -----------------------
                 // ----- TEXT FRAMES -----
                 // -----------------------
-                "TALB" => {
+                b"TALB" => {
                     get_text_field(buf, pos, frame_size, &mut changes, &mut op.album_movie_show)
                 }
-                "TBPM" => get_text_field(buf, pos, frame_size, &mut changes, &mut op.bpm),
-                "TCOM" => get_text_fields(buf, pos, frame_size, &mut changes, &mut op.composers),
-                "TCON" => {
+                b"TBPM" => get_text_field(buf, pos, frame_size, &mut changes, &mut op.bpm),
+                b"TCOM" => get_text_fields(buf, pos, frame_size, &mut changes, &mut op.composers),
+                b"TCON" => {
                     let mut s = None;
                     get_text_field(buf, pos, frame_size, &mut changes, &mut s);
                     if let Some(s) = s {
@@ -200,152 +198,158 @@ fn get_id3(i: &mut u32, buf: &[u8], meta: &mut MP3Metadata) -> Result<(), Error>
                         }
                     }
                 }
-                "TCOP" => get_text_field(buf, pos, frame_size, &mut changes, &mut op.copyright),
-                "TDAT" => get_text_field(buf, pos, frame_size, &mut changes, &mut op.date),
-                "TDLY" => {
+                b"TCOP" => get_text_field(buf, pos, frame_size, &mut changes, &mut op.copyright),
+                b"TDAT" => get_text_field(buf, pos, frame_size, &mut changes, &mut op.date),
+                b"TDLY" => {
                     get_text_field(buf, pos, frame_size, &mut changes, &mut op.playlist_delay)
                 }
-                "TENC" => get_text_field(buf, pos, frame_size, &mut changes, &mut op.encoded_by),
-                "TEXT" => get_text_fields(buf, pos, frame_size, &mut changes, &mut op.text_writers),
-                "TFLT" => get_text_field(buf, pos, frame_size, &mut changes, &mut op.file_type),
-                "TIME" => get_text_field(buf, pos, frame_size, &mut changes, &mut op.time),
-                "TIT" | "TIT2" => get_text_field(buf, pos, frame_size, &mut changes, &mut op.title),
-                "TIT1" => get_text_field(
+                b"TENC" => get_text_field(buf, pos, frame_size, &mut changes, &mut op.encoded_by),
+                b"TEXT" => {
+                    get_text_fields(buf, pos, frame_size, &mut changes, &mut op.text_writers)
+                }
+                b"TFLT" => get_text_field(buf, pos, frame_size, &mut changes, &mut op.file_type),
+                b"TIME" => get_text_field(buf, pos, frame_size, &mut changes, &mut op.time),
+                b"TIT" | b"TIT2" => {
+                    get_text_field(buf, pos, frame_size, &mut changes, &mut op.title)
+                }
+                b"TIT1" => get_text_field(
                     buf,
                     pos,
                     frame_size,
                     &mut changes,
                     &mut op.content_group_description,
                 ),
-                "TIT3" => get_text_field(
+                b"TIT3" => get_text_field(
                     buf,
                     pos,
                     frame_size,
                     &mut changes,
                     &mut op.subtitle_refinement_description,
                 ),
-                "TKEY" => get_text_field(buf, pos, frame_size, &mut changes, &mut op.initial_key),
-                "TLAN" => get_text_field(buf, pos, frame_size, &mut changes, &mut op.language),
-                "TLEN" => get_text_field(buf, pos, frame_size, &mut changes, &mut op.length),
-                "TMED" => get_text_field(buf, pos, frame_size, &mut changes, &mut op.media_type),
-                "TOAL" => get_text_field(
+                b"TKEY" => get_text_field(buf, pos, frame_size, &mut changes, &mut op.initial_key),
+                b"TLAN" => get_text_field(buf, pos, frame_size, &mut changes, &mut op.language),
+                b"TLEN" => get_text_field(buf, pos, frame_size, &mut changes, &mut op.length),
+                b"TMED" => get_text_field(buf, pos, frame_size, &mut changes, &mut op.media_type),
+                b"TOAL" => get_text_field(
                     buf,
                     pos,
                     frame_size,
                     &mut changes,
                     &mut op.original_album_move_show_title,
                 ),
-                "TOFN" => get_text_field(
+                b"TOFN" => get_text_field(
                     buf,
                     pos,
                     frame_size,
                     &mut changes,
                     &mut op.original_filename,
                 ),
-                "TOLY" => get_text_fields(
+                b"TOLY" => get_text_fields(
                     buf,
                     pos,
                     frame_size,
                     &mut changes,
                     &mut op.original_text_writers,
                 ),
-                "TOPE" => {
+                b"TOPE" => {
                     get_text_fields(buf, pos, frame_size, &mut changes, &mut op.original_artists)
                 }
-                "TORY" => get_text_field(
+                b"TORY" => get_text_field(
                     buf,
                     pos,
                     frame_size,
                     &mut changes,
                     &mut op.original_release_year,
                 ),
-                "TOWN" => get_text_field(buf, pos, frame_size, &mut changes, &mut op.file_owner),
-                "TPE1" => get_text_fields(buf, pos, frame_size, &mut changes, &mut op.performers),
-                "TPE2" => get_text_field(buf, pos, frame_size, &mut changes, &mut op.band),
-                "TPE3" => get_text_field(buf, pos, frame_size, &mut changes, &mut op.conductor),
-                "TPE4" => get_text_field(buf, pos, frame_size, &mut changes, &mut op.interpreted),
-                "TPOS" => get_text_field(buf, pos, frame_size, &mut changes, &mut op.part_of_a_set),
-                "TPUB" => get_text_field(buf, pos, frame_size, &mut changes, &mut op.publisher),
-                "TRCK" => get_text_field(buf, pos, frame_size, &mut changes, &mut op.track_number),
-                "TRDA" => {
+                b"TOWN" => get_text_field(buf, pos, frame_size, &mut changes, &mut op.file_owner),
+                b"TPE1" => get_text_fields(buf, pos, frame_size, &mut changes, &mut op.performers),
+                b"TPE2" => get_text_field(buf, pos, frame_size, &mut changes, &mut op.band),
+                b"TPE3" => get_text_field(buf, pos, frame_size, &mut changes, &mut op.conductor),
+                b"TPE4" => get_text_field(buf, pos, frame_size, &mut changes, &mut op.interpreted),
+                b"TPOS" => {
+                    get_text_field(buf, pos, frame_size, &mut changes, &mut op.part_of_a_set)
+                }
+                b"TPUB" => get_text_field(buf, pos, frame_size, &mut changes, &mut op.publisher),
+                b"TRCK" => get_text_field(buf, pos, frame_size, &mut changes, &mut op.track_number),
+                b"TRDA" => {
                     get_text_field(buf, pos, frame_size, &mut changes, &mut op.recording_dates)
                 }
-                "TRSN" => get_text_field(
+                b"TRSN" => get_text_field(
                     buf,
                     pos,
                     frame_size,
                     &mut changes,
                     &mut op.internet_radio_station_name,
                 ),
-                "TRSO" => get_text_field(
+                b"TRSO" => get_text_field(
                     buf,
                     pos,
                     frame_size,
                     &mut changes,
                     &mut op.internet_radio_station_owner,
                 ),
-                "TSIZ" => get_text_field(buf, pos, frame_size, &mut changes, &mut op.size),
-                "TSRC" => get_text_field(
+                b"TSIZ" => get_text_field(buf, pos, frame_size, &mut changes, &mut op.size),
+                b"TSRC" => get_text_field(
                     buf,
                     pos,
                     frame_size,
                     &mut changes,
                     &mut op.international_standard_recording_code,
                 ),
-                "TSSE" => get_text_field(
+                b"TSSE" => get_text_field(
                     buf,
                     pos,
                     frame_size,
                     &mut changes,
                     &mut op.soft_hard_setting,
                 ),
-                "TYER" => get_text_field(buf, pos, frame_size, &mut changes, &mut op.year),
-                "IPLS" => {
+                b"TYER" => get_text_field(buf, pos, frame_size, &mut changes, &mut op.year),
+                b"IPLS" => {
                     get_text_field(buf, pos, frame_size, &mut changes, &mut op.involved_people)
                 }
                 // ----------------------
                 // ----- URL FRAMES -----
                 // ----------------------
-                "WCOM" => get_url_fields(
+                b"WCOM" => get_url_fields(
                     buf,
                     pos,
                     frame_size,
                     &mut changes,
                     &mut op.commercial_info_url,
                 ),
-                "WCOP" => get_url_field(
+                b"WCOP" => get_url_field(
                     buf,
                     pos,
                     frame_size,
                     &mut changes,
                     &mut op.copyright_info_url,
                 ),
-                "WOAF" => {
+                b"WOAF" => {
                     get_url_field(buf, pos, frame_size, &mut changes, &mut op.official_webpage)
                 }
-                "WOAR" => get_url_fields(
+                b"WOAR" => get_url_fields(
                     buf,
                     pos,
                     frame_size,
                     &mut changes,
                     &mut op.official_artist_webpage,
                 ),
-                "WOAS" => get_url_field(
+                b"WOAS" => get_url_field(
                     buf,
                     pos,
                     frame_size,
                     &mut changes,
                     &mut op.official_audio_source_webpage,
                 ),
-                "WORS" => get_url_field(
+                b"WORS" => get_url_field(
                     buf,
                     pos,
                     frame_size,
                     &mut changes,
                     &mut op.official_internet_radio_webpage,
                 ),
-                "WPAY" => get_url_field(buf, pos, frame_size, &mut changes, &mut op.payment_url),
-                "WPUB" => get_url_field(
+                b"WPAY" => get_url_field(buf, pos, frame_size, &mut changes, &mut op.payment_url),
+                b"WPUB" => get_url_field(
                     buf,
                     pos,
                     frame_size,
