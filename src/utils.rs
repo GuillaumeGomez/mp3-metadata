@@ -16,7 +16,10 @@ pub fn compute_duration(v: Version, l: Layer, sample_rate: u16) -> Option<Durati
         _ => return None,
     };
     big /= sample_rate as u64;
-    Some(Duration::new(big / 1_000_000_000, (big % 1_000_000_000) as u32))
+    Some(Duration::new(
+        big / 1_000_000_000,
+        (big % 1_000_000_000) as u32,
+    ))
 }
 
 pub fn get_line(v: Version, l: Layer) -> usize {
@@ -62,20 +65,14 @@ pub fn create_utf16_str(buf: &[u8]) -> String {
             // UTF-16BE
             v.reserve(buf.len() / 2 - 1);
             for i in 1..buf.len() / 2 {
-                v.push(
-                    (buf[2*i] as u16) << 8
-                    | (buf[2*i+1] as u16)
-                )
+                v.push((buf[2 * i] as u16) << 8 | (buf[2 * i + 1] as u16))
             }
             return String::from_utf16_lossy(v.as_ref());
         } else if buf[0] == 0xff && buf[1] == 0xfe {
             // UTF-16LE
             v.reserve(buf.len() / 2 - 1);
             for i in 1..buf.len() / 2 {
-                v.push(
-                    (buf[2*i+1] as u16) << 8
-                    | (buf[2*i] as u16)
-                )
+                v.push((buf[2 * i + 1] as u16) << 8 | (buf[2 * i] as u16))
             }
             return String::from_utf16_lossy(v.as_ref());
         }
@@ -83,10 +80,7 @@ pub fn create_utf16_str(buf: &[u8]) -> String {
     // try as UTF-16LE
     v.reserve(buf.len() / 2);
     for i in 0..buf.len() / 2 {
-        v.push(
-            (buf[2*i+1] as u16) << 8
-            | (buf[2*i] as u16)
-        )
+        v.push((buf[2 * i + 1] as u16) << 8 | (buf[2 * i] as u16))
     }
     return String::from_utf16_lossy(v.as_ref());
 }
@@ -96,8 +90,13 @@ pub fn create_utf8_str(buf: &[u8]) -> String {
     String::from_utf8(buf.to_owned()).unwrap_or_default()
 }
 
-pub fn get_url_field(buf: &[u8], pos: usize, size: u32, changes: &mut bool,
-                     value: &mut Option<Url>) {
+pub fn get_url_field(
+    buf: &[u8],
+    pos: usize,
+    size: u32,
+    changes: &mut bool,
+    value: &mut Option<Url>,
+) {
     if value.is_some() || size < 2 {
         return;
     }
@@ -108,8 +107,7 @@ pub fn get_url_field(buf: &[u8], pos: usize, size: u32, changes: &mut bool,
     *value = Some(Url(String::from_utf8(tmp_v).unwrap_or_default()));
 }
 
-pub fn get_url_fields(buf: &[u8], pos: usize, size: u32, changes: &mut bool,
-                      value: &mut Vec<Url>) {
+pub fn get_url_fields(buf: &[u8], pos: usize, size: u32, changes: &mut bool, value: &mut Vec<Url>) {
     let mut tmp = None;
     get_url_field(buf, pos, size, changes, &mut tmp);
     if let Some(tmp) = tmp {
@@ -135,8 +133,13 @@ pub fn get_field(buf: &[u8], pos: usize, size: u32) -> String {
     }
 }
 
-pub fn get_text_field(buf: &[u8], pos: usize, size: u32, changes: &mut bool,
-                      value: &mut Option<String>) {
+pub fn get_text_field(
+    buf: &[u8],
+    pos: usize,
+    size: u32,
+    changes: &mut bool,
+    value: &mut Option<String>,
+) {
     if value.is_some() || size < 2 {
         return;
     }
@@ -146,8 +149,13 @@ pub fn get_text_field(buf: &[u8], pos: usize, size: u32, changes: &mut bool,
     *value = Some(get_field(buf, pos, size));
 }
 
-pub fn get_text_fields(buf: &[u8], pos: usize, size: u32, changes: &mut bool,
-                       value: &mut Vec<String>) {
+pub fn get_text_fields(
+    buf: &[u8],
+    pos: usize,
+    size: u32,
+    changes: &mut bool,
+    value: &mut Vec<String>,
+) {
     let tmp = get_field(buf, pos, size);
     let tmp_v = tmp.split('/');
     for entry in tmp_v {

@@ -14,30 +14,50 @@ fn basic() {
     let mut sum = Duration::new(0, 0);
     for decoding_result in decoder {
         match decoding_result {
-            Err(_) => {},
+            Err(_) => {}
             Ok(frame) => {
                 if i >= meta.frames.len() {
-                    println!("==> {} > {} {:?} {:?}", i, meta.frames.len(), meta.frames.last().unwrap().duration, frame.duration);
+                    println!(
+                        "==> {} > {} {:?} {:?}",
+                        i,
+                        meta.frames.len(),
+                        meta.frames.last().unwrap().duration,
+                        frame.duration
+                    );
                 } else {
                     if meta.frames[i].sampling_freq as u32 != frame.sample_rate {
-                        println!("[{}] [SAMPLE_RATE] {} != {}", i, meta.frames[i].sampling_freq, frame.sample_rate);
+                        println!(
+                            "[{}] [SAMPLE_RATE] {} != {}",
+                            i, meta.frames[i].sampling_freq, frame.sample_rate
+                        );
                         panic!();
                     }
                     if meta.frames[i].bitrate as u32 * 1000 != frame.bit_rate {
-                        println!("[{}] [BIT_RATE] {} != {}", i, meta.frames[i].bitrate as u32 * 1000, frame.bit_rate);
+                        println!(
+                            "[{}] [BIT_RATE] {} != {}",
+                            i,
+                            meta.frames[i].bitrate as u32 * 1000,
+                            frame.bit_rate
+                        );
                         panic!();
                     }
                     if meta.frames[i].duration.unwrap() != frame.duration {
-                        println!("[{}] [DURATION] {:?} != {:?}", i, meta.frames[i].duration, frame.duration);
+                        println!(
+                            "[{}] [DURATION] {:?} != {:?}",
+                            i, meta.frames[i].duration, frame.duration
+                        );
                         panic!();
                     }
                     if meta.frames[i].position != frame.position {
-                        println!("[{}] [POSITION] {:?} != {:?}", i, meta.frames[i].position, frame.position);
+                        println!(
+                            "[{}] [POSITION] {:?} != {:?}",
+                            i, meta.frames[i].position, frame.position
+                        );
                         panic!();
                     }
                 }
                 sum += frame.duration;
-            },
+            }
         }
         i += 1;
     }
@@ -50,7 +70,11 @@ fn basic() {
         assert_eq!(frame.sampling_freq, 44100, "sampling freq");
         assert_eq!(frame.padding, false, "padding");
         assert_eq!(frame.private_bit, false, "private bit");
-        assert_eq!(frame.chan_type, mp3_metadata::ChannelType::SingleChannel, "channel type");
+        assert_eq!(
+            frame.chan_type,
+            mp3_metadata::ChannelType::SingleChannel,
+            "channel type"
+        );
         assert_eq!(frame.intensity_stereo, false, "intensity stereo");
         assert_eq!(frame.ms_stereo, false, "ms stereo");
         assert_eq!(frame.copyright, mp3_metadata::Copyright::None, "copyright");
@@ -59,13 +83,17 @@ fn basic() {
     }
     assert_eq!(meta.frames.len(), 475, "number of frames");
     assert_eq!(meta.duration, Duration::new(12, 408162800), "duration");
-    assert_eq!(meta.tag, Some(mp3_metadata::AudioTag {
-        title: "Test of MP3 File              ".to_owned(),
-        artist: "Me                            ".to_owned(),
-        album: "Me                            ".to_owned(),
-        year: 2006,
-        comment: "test                        ".to_owned(),
-        genre: mp3_metadata::Genre::Other,
-    }), "tag");
+    assert_eq!(
+        meta.tag,
+        Some(mp3_metadata::AudioTag {
+            title: "Test of MP3 File              ".to_owned(),
+            artist: "Me                            ".to_owned(),
+            album: "Me                            ".to_owned(),
+            year: 2006,
+            comment: "test                        ".to_owned(),
+            genre: mp3_metadata::Genre::Other,
+        }),
+        "tag"
+    );
     assert_eq!(meta.duration, sum, "time check");
 }

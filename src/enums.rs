@@ -1,6 +1,6 @@
+use std;
 use std::convert::From;
 use std::default::Default;
-use std;
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum Error {
@@ -23,7 +23,6 @@ impl std::fmt::Display for Error {
         err.fmt(f)
     }
 }
-
 
 #[allow(non_camel_case_types)]
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
@@ -148,7 +147,7 @@ impl From<u32> for Copyright {
         match c {
             0x0 => Copyright::None,
             0x1 => Copyright::Some,
-            _   => unreachable!(),
+            _ => unreachable!(),
         }
     }
 }
@@ -171,7 +170,7 @@ impl From<u32> for Status {
         match c {
             0x0 => Status::Copy,
             0x1 => Status::Original,
-            _   => unreachable!(),
+            _ => unreachable!(),
         }
     }
 }
@@ -202,7 +201,7 @@ impl From<u32> for Emphasis {
             0x1 => Emphasis::MicroSeconds,
             0x2 => Emphasis::Reserved,
             0x3 => Emphasis::CCITT,
-            _   => unreachable!(),
+            _ => unreachable!(),
         }
     }
 }
