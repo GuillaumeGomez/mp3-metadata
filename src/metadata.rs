@@ -13,12 +13,12 @@ fn get_id3(i: &mut u32, buf: &[u8], meta: &mut MP3Metadata) -> Result<(), Error>
     let mut x = *i as usize;
     // Get extended information
     if buf.len() > 32 && x + 32 < buf.len() && // APE
-       buf[x] == 'A' as u8 && buf[x + 1] == 'P' as u8 && buf[x + 2] == 'E' as u8 && buf[x + 3] == 'T' as u8 &&
-       buf[x + 4] == 'A' as u8 && buf[x + 5] == 'G' as u8 && buf[x + 6] == 'E' as u8 && buf[x + 7] == 'X' as u8 {
+       buf[x] == b'A' && buf[x + 1] == b'P' && buf[x + 2] == b'E' && buf[x + 3] == b'T' &&
+       buf[x + 4] == b'A' && buf[x + 5] == b'G' && buf[x + 6] == b'E' && buf[x + 7] == b'X' {
            *i += 31; // skip APE header / footer
            Ok(())
     } else if buf.len() > 127 && x + 127 < buf.len() && // V1
-       buf[x] == 'T' as u8 && buf[x + 1] == 'A' as u8 && buf[x + 2] == 'G' as u8 {
+       buf[x] == b'T' && buf[x + 1] == b'A' && buf[x + 2] == b'G' {
         if meta.tag.is_some() {
             return Err(Error::DuplicatedIDV3);
         }
@@ -40,7 +40,7 @@ fn get_id3(i: &mut u32, buf: &[u8], meta: &mut MP3Metadata) -> Result<(), Error>
         });
         Ok(())
     } else if buf.len() > x + 13 && // V2 and above
-              buf[x] == 'I' as u8 && buf[x + 1] == 'D' as u8 && buf[x + 2] == '3' as u8 {
+              buf[x] == b'I' && buf[x + 1] == b'D' && buf[x + 2] == b'3' {
         let maj_version = buf[x + 3];
         let min_version = buf[x + 4];
 
@@ -51,7 +51,7 @@ fn get_id3(i: &mut u32, buf: &[u8], meta: &mut MP3Metadata) -> Result<(), Error>
         let tag_size = ((buf[x + 9] as usize) & 0xFF) |
                        (((buf[x + 8] as usize) & 0xFF) << 7) |
                        (((buf[x + 7] as usize) & 0xFF) << 14) |
-                       (((buf[x + 6] as usize) & 0xFF) << 21) + 10;
+                       ((((buf[x + 6] as usize) & 0xFF) << 21) + 10);
         let use_sync = buf[x + 5] & 0x80 != 0;
         let has_extended_header = buf[x + 5] & 0x40 != 0;
 
@@ -86,14 +86,14 @@ fn get_id3(i: &mut u32, buf: &[u8], meta: &mut MP3Metadata) -> Result<(), Error>
             v.reserve(tag_size);
 
             for i in 0..tag_size {
-                if skip == true {
+                if skip {
                     skip = false;
                     continue;
                 }
                 if i + 1 >= buf.len() {
                     return Ok(());
                 }
-                if i + 1 < tag_size && (buf[i] & 0xFF) == 0xFF && buf[i + 1] == 0 {
+                if i + 1 < tag_size && buf[i] == 0xFF && buf[i + 1] == 0 {
                     v[new_pos] = 0xFF;
                     new_pos += 1;
                     skip = true;
@@ -120,7 +120,7 @@ fn get_id3(i: &mut u32, buf: &[u8], meta: &mut MP3Metadata) -> Result<(), Error>
             }
 
             // Check if there is there a frame.
-            if buf[pos] < 'A' as u8 || buf[pos] > 'Z' as u8 {
+            if buf[pos] < b'A' || buf[pos] > b'Z' {
                 break;
             }
 
@@ -161,15 +161,15 @@ fn get_id3(i: &mut u32, buf: &[u8], meta: &mut MP3Metadata) -> Result<(), Error>
                     let mut s = None;
                     get_text_field(buf, pos, frame_size, &mut changes, &mut s);
                     if let Some(s) = s {
-                        if s.len() > 0 {
+                        if !s.is_empty() {
                             if s.starts_with('(') && s.ends_with(')') {
                                 let v = s.split(')').collect::<Vec<&str>>().into_iter().filter_map(|a| {
-                                    match a.replace("(", "").parse::<u8>() {
+                                    match a.replace('(', "").parse::<u8>() {
                                         Ok(num) => Some(Genre::from(num)),
                                         _ => None,
                                     }
                                 }).collect::<Vec<Genre>>();
-                                if v.len() > 0 {
+                                if !v.is_empty() {
                                     for entry in v {
                                         op.content_type.push(entry);
                                     }
@@ -181,7 +181,7 @@ fn get_id3(i: &mut u32, buf: &[u8], meta: &mut MP3Metadata) -> Result<(), Error>
                             }
                         }
                     }
-                    
+
                 }
                 "TCOP" => get_text_field(buf, pos, frame_size, &mut changes,
                                          &mut op.copyright),
@@ -279,7 +279,7 @@ fn get_id3(i: &mut u32, buf: &[u8], meta: &mut MP3Metadata) -> Result<(), Error>
 
             pos += frame_size as usize;
         }
-        if changes == true {
+        if changes {
             op.position = meta.frames.len() as u32;
             op.minor_version = min_version;
             op.major_version = maj_version;
@@ -378,7 +378,7 @@ fn read_header(buf: &[u8], i: &mut u32, meta: &mut MP3Metadata) -> Result<bool, 
 
 pub fn read_from_file<P>(file: P) -> Result<MP3Metadata, Error>
 where P: AsRef<Path> {
-    if let Some(mut fd) = File::open(file).ok() {
+    if let Ok(mut fd) = File::open(file) {
         let mut buf = Vec::new();
 
         match fd.read_to_end(&mut buf) {
@@ -401,9 +401,7 @@ pub fn read_from_slice(buf: &[u8]) -> Result<MP3Metadata, Error> {
 
     'a: while i < buf.len() as u32 {
         loop {
-            if let Err(e) = get_id3(&mut i, buf, &mut meta) {
-                return Err(e);
-            }
+            get_id3(&mut i, buf, &mut meta)?;
             if i + 3 >= buf.len() as u32 {
                 break 'a;
             }
@@ -413,9 +411,7 @@ pub fn read_from_slice(buf: &[u8]) -> Result<MP3Metadata, Error> {
                 _ => {}
             }
             let old_i = i;
-            if let Err(e) = get_id3(&mut i, buf, &mut meta) {
-                return Err(e);
-            }
+            get_id3(&mut i, buf, &mut meta)?;
             if i == old_i {
                 i += 1;
             }
@@ -431,7 +427,7 @@ pub fn read_from_slice(buf: &[u8]) -> Result<MP3Metadata, Error> {
             }
         }
     }
-    if meta.frames.len() < 1 {
+    if meta.frames.is_empty() {
         Err(Error::NotMP3)
     } else {
         Ok(meta)

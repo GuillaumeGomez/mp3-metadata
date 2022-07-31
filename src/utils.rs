@@ -63,7 +63,7 @@ pub fn create_utf16_str(buf: &[u8]) -> String {
             v.reserve(buf.len() / 2 - 1);
             for i in 1..buf.len() / 2 {
                 v.push(
-                    (buf[2*i+0] as u16) << 8
+                    (buf[2*i] as u16) << 8
                     | (buf[2*i+1] as u16)
                 )
             }
@@ -74,7 +74,7 @@ pub fn create_utf16_str(buf: &[u8]) -> String {
             for i in 1..buf.len() / 2 {
                 v.push(
                     (buf[2*i+1] as u16) << 8
-                    | (buf[2*i+0] as u16)
+                    | (buf[2*i] as u16)
                 )
             }
             return String::from_utf16_lossy(v.as_ref());
@@ -85,7 +85,7 @@ pub fn create_utf16_str(buf: &[u8]) -> String {
     for i in 0..buf.len() / 2 {
         v.push(
             (buf[2*i+1] as u16) << 8
-            | (buf[2*i+0] as u16)
+            | (buf[2*i] as u16)
         )
     }
     return String::from_utf16_lossy(v.as_ref());
@@ -93,7 +93,7 @@ pub fn create_utf16_str(buf: &[u8]) -> String {
 
 pub fn create_utf8_str(buf: &[u8]) -> String {
     // String::from_utf8_lossy(buf).into_owned()
-    String::from_utf8(buf.to_owned()).unwrap_or(String::new())
+    String::from_utf8(buf.to_owned()).unwrap_or_default()
 }
 
 pub fn get_url_field(buf: &[u8], pos: usize, size: u32, changes: &mut bool,
@@ -101,11 +101,11 @@ pub fn get_url_field(buf: &[u8], pos: usize, size: u32, changes: &mut bool,
     if value.is_some() || size < 2 {
         return;
     }
-    if *changes == false {
+    if !(*changes) {
         *changes = true;
     }
     let tmp_v = buf[pos..pos + size as usize].to_vec();
-    *value = Some(Url(String::from_utf8(tmp_v).unwrap_or(String::new())));
+    *value = Some(Url(String::from_utf8(tmp_v).unwrap_or_default()));
 }
 
 pub fn get_url_fields(buf: &[u8], pos: usize, size: u32, changes: &mut bool,
@@ -119,7 +119,7 @@ pub fn get_url_fields(buf: &[u8], pos: usize, size: u32, changes: &mut bool,
 
 pub fn get_field(buf: &[u8], pos: usize, size: u32) -> String {
     let buf = &buf[pos..][..size as usize];
-    if buf.len() < 1 {
+    if buf.is_empty() {
         String::new()
     } else if buf[0] == 0 {
         // ISO-8859-1
@@ -140,7 +140,7 @@ pub fn get_text_field(buf: &[u8], pos: usize, size: u32, changes: &mut bool,
     if value.is_some() || size < 2 {
         return;
     }
-    if *changes == false {
+    if !(*changes) {
         *changes = true;
     }
     *value = Some(get_field(buf, pos, size));
@@ -149,13 +149,13 @@ pub fn get_text_field(buf: &[u8], pos: usize, size: u32, changes: &mut bool,
 pub fn get_text_fields(buf: &[u8], pos: usize, size: u32, changes: &mut bool,
                        value: &mut Vec<String>) {
     let tmp = get_field(buf, pos, size);
-    let tmp_v = tmp.split("/");
+    let tmp_v = tmp.split('/');
     for entry in tmp_v {
-        if entry.len() > 0 {
+        if !entry.is_empty() {
             value.push(entry.to_owned());
         }
     }
-    if *changes == false {
+    if !(*changes) {
         *changes = true;
     }
 }
