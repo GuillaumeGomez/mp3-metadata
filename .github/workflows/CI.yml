@@ -25,5 +25,4 @@ jobs:
       - run: cargo clippy -- -D warnings
       - run: cargo build
       - run: RUST_BACKTRACE=1 cargo test
-      - run: cd examples
-      - run: cargo run -- ../assets/test.mp3
+      - run: cd examples && cargo run -- ../assets/test.mp3
