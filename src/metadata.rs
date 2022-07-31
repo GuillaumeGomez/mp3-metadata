@@ -325,6 +325,7 @@ fn read_header(buf: &[u8], i: &mut u32, meta: &mut MP3Metadata) -> Result<bool, 
                                           frame.layer,
                                           frame.sampling_freq);
         frame.position = meta.duration;
+        frame.offset = *i;
 
         if let Some(dur) = frame.duration {
             meta.duration += dur;
