@@ -11,6 +11,7 @@ use utils::{
 };
 use utils::{get_url_field, get_url_fields};
 
+#[allow(clippy::too_many_lines, clippy::cast_possible_truncation)]
 fn get_id3(i: &mut u32, buf: &[u8], meta: &mut MP3Metadata) -> Result<(), Error> {
     let mut x = *i as usize;
     // Get extended information
@@ -65,10 +66,10 @@ fn get_id3(i: &mut u32, buf: &[u8], meta: &mut MP3Metadata) -> Result<(), Error>
                 *i = x as u32;
                 return Ok(());
             }
-            let header_size = ((buf[x] as u32) << 21)
-                | ((buf[x + 1] as u32) << 14)
-                | ((buf[x + 2] as u32) << 7)
-                | buf[x + 3] as u32;
+            let header_size = (u32::from(buf[x]) << 21)
+                | (u32::from(buf[x + 1]) << 14)
+                | (u32::from(buf[x + 2]) << 7)
+                | u32::from(buf[x + 3]);
             if header_size < 4 {
                 return Ok(());
             }
@@ -133,25 +134,25 @@ fn get_id3(i: &mut u32, buf: &[u8], meta: &mut MP3Metadata) -> Result<(), Error>
             let (frame_name, frame_size) = if maj_version < 3 {
                 (
                     &buf[pos..pos + 3],
-                    (buf[pos + 5] as u32 & 0xFF)
-                        | ((buf[pos + 4] as u32 & 0xFF) << 8)
-                        | ((buf[pos + 3] as u32 & 0xFF) << 16),
+                    (u32::from(buf[pos + 5]) & 0xFF)
+                        | ((u32::from(buf[pos + 4]) & 0xFF) << 8)
+                        | ((u32::from(buf[pos + 3]) & 0xFF) << 16),
                 )
             } else if maj_version < 4 {
                 (
                     &buf[pos..pos + 4],
-                    (buf[pos + 7] as u32 & 0xFF)
-                        | ((buf[pos + 6] as u32 & 0xFF) << 8)
-                        | ((buf[pos + 5] as u32 & 0xFF) << 16)
-                        | ((buf[pos + 4] as u32 & 0xFF) << 24),
+                    (u32::from(buf[pos + 7]) & 0xFF)
+                        | ((u32::from(buf[pos + 6]) & 0xFF) << 8)
+                        | ((u32::from(buf[pos + 5]) & 0xFF) << 16)
+                        | ((u32::from(buf[pos + 4]) & 0xFF) << 24),
                 )
             } else {
                 (
                     &buf[pos..pos + 4],
-                    (buf[pos + 7] as u32 & 0xFF)
-                        | ((buf[pos + 6] as u32 & 0xFF) << 7)
-                        | ((buf[pos + 5] as u32 & 0xFF) << 14)
-                        | ((buf[pos + 4] as u32 & 0xFF) << 21),
+                    (u32::from(buf[pos + 7]) & 0xFF)
+                        | ((u32::from(buf[pos + 6]) & 0xFF) << 7)
+                        | ((u32::from(buf[pos + 5]) & 0xFF) << 14)
+                        | ((u32::from(buf[pos + 4]) & 0xFF) << 21),
                 )
             };
 
@@ -166,7 +167,7 @@ fn get_id3(i: &mut u32, buf: &[u8], meta: &mut MP3Metadata) -> Result<(), Error>
                 // ----- TEXT FRAMES -----
                 // -----------------------
                 b"TALB" => {
-                    get_text_field(buf, pos, frame_size, &mut changes, &mut op.album_movie_show)
+                    get_text_field(buf, pos, frame_size, &mut changes, &mut op.album_movie_show);
                 }
                 b"TBPM" => get_text_field(buf, pos, frame_size, &mut changes, &mut op.bpm),
                 b"TCOM" => get_text_fields(buf, pos, frame_size, &mut changes, &mut op.composers),
@@ -180,17 +181,14 @@ fn get_id3(i: &mut u32, buf: &[u8], meta: &mut MP3Metadata) -> Result<(), Error>
                                     .split(')')
                                     .collect::<Vec<&str>>()
                                     .into_iter()
-                                    .filter_map(|a| match a.replace('(', "").parse::<u8>() {
-                                        Ok(num) => Some(Genre::from(num)),
-                                        _ => None,
-                                    })
+                                    .filter_map(|a| a.replace('(', "").parse::<u8>().map_or(None, |num| Some(Genre::from(num))))
                                     .collect::<Vec<Genre>>();
-                                if !v.is_empty() {
+                                if v.is_empty() {
+                                    op.content_type.push(Genre::from(s.as_str()));
+                                } else {
                                     for entry in v {
                                         op.content_type.push(entry);
                                     }
-                                } else {
-                                    op.content_type.push(Genre::from(s.as_str()));
                                 }
                             } else {
                                 op.content_type.push(Genre::from(s.as_str()));
@@ -201,16 +199,16 @@ fn get_id3(i: &mut u32, buf: &[u8], meta: &mut MP3Metadata) -> Result<(), Error>
                 b"TCOP" => get_text_field(buf, pos, frame_size, &mut changes, &mut op.copyright),
                 b"TDAT" => get_text_field(buf, pos, frame_size, &mut changes, &mut op.date),
                 b"TDLY" => {
-                    get_text_field(buf, pos, frame_size, &mut changes, &mut op.playlist_delay)
+                    get_text_field(buf, pos, frame_size, &mut changes, &mut op.playlist_delay);
                 }
                 b"TENC" => get_text_field(buf, pos, frame_size, &mut changes, &mut op.encoded_by),
                 b"TEXT" => {
-                    get_text_fields(buf, pos, frame_size, &mut changes, &mut op.text_writers)
+                    get_text_fields(buf, pos, frame_size, &mut changes, &mut op.text_writers);
                 }
                 b"TFLT" => get_text_field(buf, pos, frame_size, &mut changes, &mut op.file_type),
                 b"TIME" => get_text_field(buf, pos, frame_size, &mut changes, &mut op.time),
                 b"TIT" | b"TIT2" => {
-                    get_text_field(buf, pos, frame_size, &mut changes, &mut op.title)
+                    get_text_field(buf, pos, frame_size, &mut changes, &mut op.title);
                 }
                 b"TIT1" => get_text_field(
                     buf,
@@ -252,7 +250,7 @@ fn get_id3(i: &mut u32, buf: &[u8], meta: &mut MP3Metadata) -> Result<(), Error>
                     &mut op.original_text_writers,
                 ),
                 b"TOPE" => {
-                    get_text_fields(buf, pos, frame_size, &mut changes, &mut op.original_artists)
+                    get_text_fields(buf, pos, frame_size, &mut changes, &mut op.original_artists);
                 }
                 b"TORY" => get_text_field(
                     buf,
@@ -267,12 +265,12 @@ fn get_id3(i: &mut u32, buf: &[u8], meta: &mut MP3Metadata) -> Result<(), Error>
                 b"TPE3" => get_text_field(buf, pos, frame_size, &mut changes, &mut op.conductor),
                 b"TPE4" => get_text_field(buf, pos, frame_size, &mut changes, &mut op.interpreted),
                 b"TPOS" => {
-                    get_text_field(buf, pos, frame_size, &mut changes, &mut op.part_of_a_set)
+                    get_text_field(buf, pos, frame_size, &mut changes, &mut op.part_of_a_set);
                 }
                 b"TPUB" => get_text_field(buf, pos, frame_size, &mut changes, &mut op.publisher),
                 b"TRCK" => get_text_field(buf, pos, frame_size, &mut changes, &mut op.track_number),
                 b"TRDA" => {
-                    get_text_field(buf, pos, frame_size, &mut changes, &mut op.recording_dates)
+                    get_text_field(buf, pos, frame_size, &mut changes, &mut op.recording_dates);
                 }
                 b"TRSN" => get_text_field(
                     buf,
@@ -305,7 +303,7 @@ fn get_id3(i: &mut u32, buf: &[u8], meta: &mut MP3Metadata) -> Result<(), Error>
                 ),
                 b"TYER" => get_text_field(buf, pos, frame_size, &mut changes, &mut op.year),
                 b"IPLS" => {
-                    get_text_field(buf, pos, frame_size, &mut changes, &mut op.involved_people)
+                    get_text_field(buf, pos, frame_size, &mut changes, &mut op.involved_people);
                 }
                 // ----------------------
                 // ----- URL FRAMES -----
@@ -325,7 +323,7 @@ fn get_id3(i: &mut u32, buf: &[u8], meta: &mut MP3Metadata) -> Result<(), Error>
                     &mut op.copyright_info_url,
                 ),
                 b"WOAF" => {
-                    get_url_field(buf, pos, frame_size, &mut changes, &mut op.official_webpage)
+                    get_url_field(buf, pos, frame_size, &mut changes, &mut op.official_webpage);
                 }
                 b"WOAR" => get_url_fields(
                     buf,
@@ -375,17 +373,18 @@ fn get_id3(i: &mut u32, buf: &[u8], meta: &mut MP3Metadata) -> Result<(), Error>
     }
 }
 
+#[allow(clippy::cast_sign_loss, clippy::cast_possible_truncation)]
 fn read_header(buf: &[u8], i: &mut u32, meta: &mut MP3Metadata) -> Result<bool, Error> {
-    let header = (buf[*i as usize] as u32) << 24
-        | (buf[*i as usize + 1] as u32) << 16
-        | (buf[*i as usize + 2] as u32) << 8
-        | buf[*i as usize + 3] as u32;
-    if header & 0xffe00000 == 0xffe00000
+    let header = u32::from(buf[*i as usize]) << 24
+        | u32::from(buf[*i as usize + 1]) << 16
+        | u32::from(buf[*i as usize + 2]) << 8
+        | u32::from(buf[*i as usize + 3]);
+    if header & 0xffe0_0000 == 0xffe0_0000
         && header & (3 << 17) != 0
         && header & (0xf << 12) != (0xf << 12)
         && header & (3 << 10) != (3 << 10)
     {
-        let mut frame: Frame = Default::default();
+        let mut frame: Frame = Frame::default();
 
         frame.version = Version::from((header >> 19) & 3);
         frame.layer = Layer::from((header >> 17) & 3);
@@ -417,25 +416,7 @@ fn read_header(buf: &[u8], i: &mut u32, meta: &mut MP3Metadata) -> Result<bool, 
         if let Some(dur) = frame.duration {
             meta.duration += dur;
         }
-        /*frame.size = if frame.layer == Layer::Layer1 && frame.sampling_freq > 0 {
-            /*println!("{:4}: (12000 * {} / {} + {}) * 4 = {}", i, frame.bitrate as u64, frame.sampling_freq as u64,
-                if frame.slot { 1 } else { 0 },
-                    (12000 * frame.bitrate as u64 / frame.sampling_freq as u64 +
-                if frame.slot { 1 } else { 0 }) * 4);*/
 
-            (12000 * frame.bitrate as u64 / frame.sampling_freq as u64 +
-                if frame.slot { 1 } else { 0 }) * 4
-        } else if (frame.layer == Layer::Layer2 || frame.layer == Layer::Layer3) && frame.sampling_freq > 0 {
-            /*println!("{:4}: 144000 * {} / {} + {} = {}", i, frame.bitrate as u64, frame.sampling_freq as u64,
-                if frame.slot { 1 } else { 0 },
-                    144000 * frame.bitrate as u64 / frame.sampling_freq as u64 +
-                if frame.slot { 1 } else { 0 });*/
-
-            144000 * frame.bitrate as u64 / frame.sampling_freq as u64 +
-                if frame.slot { 1 } else { 0 }
-        } else {
-            continue 'a;
-        } as u32;*/
         let samples_per_frame = match frame.layer {
             Layer::Layer3 => {
                 if frame.version == Version::MPEG1 {
@@ -448,8 +429,8 @@ fn read_header(buf: &[u8], i: &mut u32, meta: &mut MP3Metadata) -> Result<bool, 
             Layer::Layer1 => 384,
             _ => unreachable!(),
         };
-        frame.size = (samples_per_frame as u64 / 8 * frame.bitrate as u64 * 1000
-            / frame.sampling_freq as u64) as u32;
+        frame.size = (samples_per_frame as u64 / 8 * u64::from(frame.bitrate) * 1000
+            / u64::from(frame.sampling_freq)) as u32;
         if frame.size < 1 {
             return Ok(false);
         }
@@ -464,22 +445,22 @@ fn read_header(buf: &[u8], i: &mut u32, meta: &mut MP3Metadata) -> Result<bool, 
     }
 }
 
+#[allow(clippy::missing_errors_doc)]
 pub fn read_from_file<P>(file: P) -> Result<MP3Metadata, Error>
 where
     P: AsRef<Path>,
 {
-    if let Ok(mut fd) = File::open(file) {
+    File::open(file).map_or(Err(Error::FileError), |mut fd| {
         let mut buf = Vec::new();
 
         match fd.read_to_end(&mut buf) {
             Ok(_) => read_from_slice(&buf),
             Err(_) => Err(Error::FileError),
         }
-    } else {
-        Err(Error::FileError)
-    }
+    })
 }
 
+#[allow(clippy::cast_possible_truncation, clippy::missing_errors_doc)]
 pub fn read_from_slice(buf: &[u8]) -> Result<MP3Metadata, Error> {
     let mut meta = MP3Metadata {
         frames: Vec::new(),

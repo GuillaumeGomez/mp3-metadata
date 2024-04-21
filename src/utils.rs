@@ -9,30 +9,30 @@ pub fn compute_duration(v: Version, l: Layer, sample_rate: u16) -> Option<Durati
         return None;
     }
     let mut big = match v {
-        Version::MPEG1 => SAMPLES_PER_FRAME[0][get_layer_value(l)] as u64 * 1_000_000_000,
+        Version::MPEG1 => u64::from(SAMPLES_PER_FRAME[0][get_layer_value(l)]) * 1_000_000_000,
         Version::MPEG2 | Version::MPEG2_5 => {
-            SAMPLES_PER_FRAME[1][get_layer_value(l)] as u64 * 1_000_000_000
+            u64::from(SAMPLES_PER_FRAME[1][get_layer_value(l)]) * 1_000_000_000
         }
         _ => return None,
     };
-    big /= sample_rate as u64;
+    big /= u64::from(sample_rate);
     Some(Duration::new(
         big / 1_000_000_000,
         (big % 1_000_000_000) as u32,
     ))
 }
 
-pub fn get_line(v: Version, l: Layer) -> usize {
+pub const fn get_line(v: Version, l: Layer) -> usize {
     match (v, l) {
         (Version::MPEG1, Layer::Layer1) => 0,
         (Version::MPEG1, Layer::Layer2) => 1,
         (Version::MPEG1, Layer::Layer3) => 2,
-        (Version::MPEG2, Layer::Layer1) | (Version::MPEG2_5, Layer::Layer1) => 3,
+        (Version::MPEG2 | Version::MPEG2_5, Layer::Layer1) => 3,
         _ => 4,
     }
 }
 
-pub fn get_layer_value(l: Layer) -> usize {
+pub const fn get_layer_value(l: Layer) -> usize {
     match l {
         Layer::Layer1 => 0,
         Layer::Layer2 => 1,
@@ -41,7 +41,8 @@ pub fn get_layer_value(l: Layer) -> usize {
     }
 }
 
-pub fn get_samp_line(v: Version) -> usize {
+#[allow(clippy::match_same_arms)]
+pub const fn get_samp_line(v: Version) -> usize {
     match v {
         Version::MPEG1 => 0,
         Version::MPEG2 => 1,
@@ -53,7 +54,7 @@ pub fn get_samp_line(v: Version) -> usize {
 pub fn create_latin1_str(buf: &[u8]) -> String {
     // interpret each byte as full codepoint. UTF-16 is big enough to
     // represent those, surrogate pairs can't be created that way
-    let utf16 = buf.iter().map(|c| *c as u16).collect::<Vec<u16>>();
+    let utf16 = buf.iter().map(|c| u16::from(*c)).collect::<Vec<u16>>();
     String::from_utf16_lossy(utf16.as_ref())
 }
 
@@ -65,14 +66,14 @@ pub fn create_utf16_str(buf: &[u8]) -> String {
             // UTF-16BE
             v.reserve(buf.len() / 2 - 1);
             for i in 1..buf.len() / 2 {
-                v.push((buf[2 * i] as u16) << 8 | (buf[2 * i + 1] as u16))
+                v.push(u16::from(buf[2 * i]) << 8 | u16::from(buf[2 * i + 1]));
             }
             return String::from_utf16_lossy(v.as_ref());
         } else if buf[0] == 0xff && buf[1] == 0xfe {
             // UTF-16LE
             v.reserve(buf.len() / 2 - 1);
             for i in 1..buf.len() / 2 {
-                v.push((buf[2 * i + 1] as u16) << 8 | (buf[2 * i] as u16))
+                v.push(u16::from(buf[2 * i + 1]) << 8 | u16::from(buf[2 * i]));
             }
             return String::from_utf16_lossy(v.as_ref());
         }
@@ -80,7 +81,7 @@ pub fn create_utf16_str(buf: &[u8]) -> String {
     // try as UTF-16LE
     v.reserve(buf.len() / 2);
     for i in 0..buf.len() / 2 {
-        v.push((buf[2 * i + 1] as u16) << 8 | (buf[2 * i] as u16))
+        v.push(u16::from(buf[2 * i + 1]) << 8 | u16::from(buf[2 * i]));
     }
     return String::from_utf16_lossy(v.as_ref());
 }

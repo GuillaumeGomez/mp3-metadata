@@ -2,6 +2,7 @@ use std::time::Duration;
 
 use enums::{ChannelType, Copyright, Emphasis, Genre, Layer, Status, Version, CRC};
 
+#[allow(clippy::struct_excessive_bools)]
 #[derive(Debug, Default, Eq, PartialEq)]
 pub struct Frame {
     pub size: u32,
@@ -45,7 +46,7 @@ pub struct AudioTag {
 pub struct Url(pub String);
 
 // TODO: Add picture support
-/// id3.org/id3v2.3.0#Declared_ID3v2_frames#Text_information_frames_-_details
+/// `id3.org/id3v2.3.0#Declared_ID3v2_frames#Text_information_frames`_-_details
 #[derive(Debug, Default, Eq, PartialEq)]
 pub struct OptionalAudioTags {
     /// Corresponds to the nth frames `MP3Metadata.frame`.

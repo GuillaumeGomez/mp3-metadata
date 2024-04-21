@@ -14,11 +14,11 @@ pub enum Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let err = match *self {
-            Error::FileError => "An I/O error occurred",
-            Error::NotMP3 => "The file is not a valid MP3 file",
-            Error::NoHeader => "The file is missing an MP3 header",
-            Error::DuplicatedIDV3 => "The MP3 file contains a duplicate IDv3 frame",
-            Error::InvalidData => "The MP3 metadata is invalid",
+            Self::FileError => "An I/O error occurred",
+            Self::NotMP3 => "The file is not a valid MP3 file",
+            Self::NoHeader => "The file is missing an MP3 header",
+            Self::DuplicatedIDV3 => "The MP3 file contains a duplicate IDv3 frame",
+            Self::InvalidData => "The MP3 metadata is invalid",
         };
         err.fmt(f)
     }
@@ -35,18 +35,18 @@ pub enum Version {
 }
 
 impl Default for Version {
-    fn default() -> Version {
-        Version::Unknown
+    fn default() -> Self {
+        Self::Unknown
     }
 }
 
 impl From<u32> for Version {
-    fn from(c: u32) -> Version {
+    fn from(c: u32) -> Self {
         match c {
-            0x00 => Version::MPEG2_5,
-            0x01 => Version::Reserved,
-            0x02 => Version::MPEG2,
-            0x03 => Version::MPEG1,
+            0x00 => Self::MPEG2_5,
+            0x01 => Self::Reserved,
+            0x02 => Self::MPEG2,
+            0x03 => Self::MPEG1,
             _ => unreachable!(),
         }
     }
@@ -62,18 +62,18 @@ pub enum Layer {
 }
 
 impl Default for Layer {
-    fn default() -> Layer {
-        Layer::Unknown
+    fn default() -> Self {
+        Self::Unknown
     }
 }
 
 impl From<u32> for Layer {
-    fn from(c: u32) -> Layer {
+    fn from(c: u32) -> Self {
         match c {
-            0x0 => Layer::Reserved,
-            0x1 => Layer::Layer3,
-            0x2 => Layer::Layer2,
-            0x3 => Layer::Layer1,
+            0x0 => Self::Reserved,
+            0x1 => Self::Layer3,
+            0x2 => Self::Layer2,
+            0x3 => Self::Layer1,
             _ => unreachable!(),
         }
     }
@@ -88,16 +88,16 @@ pub enum CRC {
 }
 
 impl Default for CRC {
-    fn default() -> CRC {
-        CRC::NotAdded
+    fn default() -> Self {
+        Self::NotAdded
     }
 }
 
 impl From<u32> for CRC {
-    fn from(c: u32) -> CRC {
+    fn from(c: u32) -> Self {
         match c {
-            0x00 => CRC::Added,
-            0x01 => CRC::NotAdded,
+            0x00 => Self::Added,
+            0x01 => Self::NotAdded,
             _ => unreachable!(),
         }
     }
@@ -113,18 +113,18 @@ pub enum ChannelType {
 }
 
 impl Default for ChannelType {
-    fn default() -> ChannelType {
-        ChannelType::Unknown
+    fn default() -> Self {
+        Self::Unknown
     }
 }
 
 impl From<u32> for ChannelType {
-    fn from(c: u32) -> ChannelType {
+    fn from(c: u32) -> Self {
         match c {
-            0x0 => ChannelType::Stereo,
-            0x1 => ChannelType::JointStereo,
-            0x2 => ChannelType::DualChannel,
-            0x3 => ChannelType::SingleChannel,
+            0x0 => Self::Stereo,
+            0x1 => Self::JointStereo,
+            0x2 => Self::DualChannel,
+            0x3 => Self::SingleChannel,
             _ => unreachable!(),
         }
     }
@@ -137,16 +137,16 @@ pub enum Copyright {
 }
 
 impl Default for Copyright {
-    fn default() -> Copyright {
-        Copyright::Some
+    fn default() -> Self {
+        Self::Some
     }
 }
 
 impl From<u32> for Copyright {
-    fn from(c: u32) -> Copyright {
+    fn from(c: u32) -> Self {
         match c {
-            0x0 => Copyright::None,
-            0x1 => Copyright::Some,
+            0x0 => Self::None,
+            0x1 => Self::Some,
             _ => unreachable!(),
         }
     }
@@ -160,16 +160,16 @@ pub enum Status {
 }
 
 impl Default for Status {
-    fn default() -> Status {
-        Status::Unknown
+    fn default() -> Self {
+        Self::Unknown
     }
 }
 
 impl From<u32> for Status {
-    fn from(c: u32) -> Status {
+    fn from(c: u32) -> Self {
         match c {
-            0x0 => Status::Copy,
-            0x1 => Status::Original,
+            0x0 => Self::Copy,
+            0x1 => Self::Original,
             _ => unreachable!(),
         }
     }
@@ -189,18 +189,18 @@ pub enum Emphasis {
 }
 
 impl Default for Emphasis {
-    fn default() -> Emphasis {
-        Emphasis::Unknown
+    fn default() -> Self {
+        Self::Unknown
     }
 }
 
 impl From<u32> for Emphasis {
-    fn from(c: u32) -> Emphasis {
+    fn from(c: u32) -> Self {
         match c {
-            0x0 => Emphasis::None,
-            0x1 => Emphasis::MicroSeconds,
-            0x2 => Emphasis::Reserved,
-            0x3 => Emphasis::CCITT,
+            0x0 => Self::None,
+            0x1 => Self::MicroSeconds,
+            0x2 => Self::Reserved,
+            0x3 => Self::CCITT,
             _ => unreachable!(),
         }
     }
@@ -340,150 +340,148 @@ pub enum Genre {
 }
 
 impl Default for Genre {
-    fn default() -> Genre {
-        Genre::Unknown
+    fn default() -> Self {
+        Self::Unknown
     }
 }
 
 impl<'a> From<&'a str> for Genre {
-    fn from(c: &'a str) -> Genre {
-        match c.parse::<u8>() {
-            Ok(nb) => Genre::from(nb),
-            Err(_) => Genre::Something(c.to_owned()),
-        }
+    fn from(c: &'a str) -> Self {
+        c.parse::<u8>().map_or_else(|_| Self::Something(c.to_owned()), Self::from)
     }
 }
 
 impl From<u8> for Genre {
-    fn from(c: u8) -> Genre {
+    #[allow(clippy::too_many_lines)]
+    fn from(c: u8) -> Self {
         match c {
-            0 => Genre::Blues,
-            1 => Genre::ClassicRock,
-            2 => Genre::Country,
-            3 => Genre::Dance,
-            4 => Genre::Disco,
-            5 => Genre::Funk,
-            6 => Genre::Grunge,
-            7 => Genre::HipHop,
-            8 => Genre::Jazz,
-            9 => Genre::Metal,
-            10 => Genre::NewAge,
-            11 => Genre::Oldies,
-            12 => Genre::Other,
-            13 => Genre::Pop,
-            14 => Genre::RAndB,
-            15 => Genre::Rap,
-            16 => Genre::Reggae,
-            17 => Genre::Rock,
-            18 => Genre::Techno,
-            19 => Genre::Industrial,
-            20 => Genre::Alternative,
-            21 => Genre::Ska,
-            22 => Genre::DeathMetal,
-            23 => Genre::Pranks,
-            24 => Genre::Soundtrack,
-            25 => Genre::EuroTechno,
-            26 => Genre::Ambient,
-            27 => Genre::TripHop,
-            28 => Genre::Vocal,
-            29 => Genre::JazzFunk,
-            30 => Genre::Fusion,
-            31 => Genre::Trance,
-            32 => Genre::Classical,
-            33 => Genre::Instrumental,
-            34 => Genre::Acid,
-            35 => Genre::House,
-            36 => Genre::Game,
-            37 => Genre::SoundClip,
-            38 => Genre::Gospel,
-            39 => Genre::Noise,
-            40 => Genre::AlternRock,
-            41 => Genre::Bass,
-            42 => Genre::Soul,
-            43 => Genre::Punk,
-            44 => Genre::Space,
-            45 => Genre::Meditative,
-            46 => Genre::InstrumentalPop,
-            47 => Genre::InstrumentalRock,
-            48 => Genre::Ethnic,
-            49 => Genre::Gothic,
-            50 => Genre::Darkwave,
-            51 => Genre::TechnoIndustrial,
-            52 => Genre::Electronic,
-            53 => Genre::PopFolk,
-            54 => Genre::Eurodance,
-            55 => Genre::Dream,
-            56 => Genre::SouthernRock,
-            57 => Genre::Comedy,
-            58 => Genre::Cult,
-            59 => Genre::Gangsta,
-            60 => Genre::Top40,
-            61 => Genre::ChristianRap,
-            62 => Genre::PopFunk,
-            63 => Genre::Jungle,
-            64 => Genre::NativeAmerican,
-            65 => Genre::Cabaret,
-            66 => Genre::NewWave,
-            67 => Genre::Psychadelic,
-            68 => Genre::Rave,
-            69 => Genre::Showtunes,
-            70 => Genre::Trailer,
-            71 => Genre::LoFi,
-            72 => Genre::Tribal,
-            73 => Genre::AcidPunk,
-            74 => Genre::AcidJazz,
-            75 => Genre::Polka,
-            76 => Genre::Retro,
-            77 => Genre::Musical,
-            78 => Genre::RockAndRoll,
-            79 => Genre::HardRock,
-            80 => Genre::Folk,
-            81 => Genre::FolkRock,
-            82 => Genre::NationalFolk,
-            83 => Genre::Swing,
-            84 => Genre::FastFusion,
-            85 => Genre::Bebob,
-            86 => Genre::Latin,
-            87 => Genre::Revival,
-            88 => Genre::Celtic,
-            89 => Genre::Bluegrass,
-            90 => Genre::Avantgarde,
-            91 => Genre::GothicRock,
-            92 => Genre::ProgressiveRock,
-            93 => Genre::PsychedelicRock,
-            94 => Genre::SymphonicRock,
-            95 => Genre::SlowRock,
-            96 => Genre::BigBand,
-            97 => Genre::Chorus,
-            98 => Genre::EasyListening,
-            99 => Genre::Acoustic,
-            100 => Genre::Humour,
-            101 => Genre::Speech,
-            102 => Genre::Chanson,
-            103 => Genre::Opera,
-            104 => Genre::ChamberMusic,
-            105 => Genre::Sonata,
-            106 => Genre::Symphony,
-            107 => Genre::BootyBrass,
-            108 => Genre::Primus,
-            109 => Genre::PornGroove,
-            110 => Genre::Satire,
-            111 => Genre::SlowJam,
-            112 => Genre::Club,
-            113 => Genre::Tango,
-            114 => Genre::Samba,
-            115 => Genre::Folklore,
-            116 => Genre::Ballad,
-            117 => Genre::PowerBallad,
-            118 => Genre::RhytmicSoul,
-            119 => Genre::Freestyle,
-            120 => Genre::Duet,
-            121 => Genre::PunkRock,
-            122 => Genre::DrumSolo,
-            123 => Genre::ACapela,
-            124 => Genre::EuroHouse,
-            125 => Genre::DanceHall,
-            _ => Genre::Unknown,
+            0 => Self::Blues,
+            1 => Self::ClassicRock,
+            2 => Self::Country,
+            3 => Self::Dance,
+            4 => Self::Disco,
+            5 => Self::Funk,
+            6 => Self::Grunge,
+            7 => Self::HipHop,
+            8 => Self::Jazz,
+            9 => Self::Metal,
+            10 => Self::NewAge,
+            11 => Self::Oldies,
+            12 => Self::Other,
+            13 => Self::Pop,
+            14 => Self::RAndB,
+            15 => Self::Rap,
+            16 => Self::Reggae,
+            17 => Self::Rock,
+            18 => Self::Techno,
+            19 => Self::Industrial,
+            20 => Self::Alternative,
+            21 => Self::Ska,
+            22 => Self::DeathMetal,
+            23 => Self::Pranks,
+            24 => Self::Soundtrack,
+            25 => Self::EuroTechno,
+            26 => Self::Ambient,
+            27 => Self::TripHop,
+            28 => Self::Vocal,
+            29 => Self::JazzFunk,
+            30 => Self::Fusion,
+            31 => Self::Trance,
+            32 => Self::Classical,
+            33 => Self::Instrumental,
+            34 => Self::Acid,
+            35 => Self::House,
+            36 => Self::Game,
+            37 => Self::SoundClip,
+            38 => Self::Gospel,
+            39 => Self::Noise,
+            40 => Self::AlternRock,
+            41 => Self::Bass,
+            42 => Self::Soul,
+            43 => Self::Punk,
+            44 => Self::Space,
+            45 => Self::Meditative,
+            46 => Self::InstrumentalPop,
+            47 => Self::InstrumentalRock,
+            48 => Self::Ethnic,
+            49 => Self::Gothic,
+            50 => Self::Darkwave,
+            51 => Self::TechnoIndustrial,
+            52 => Self::Electronic,
+            53 => Self::PopFolk,
+            54 => Self::Eurodance,
+            55 => Self::Dream,
+            56 => Self::SouthernRock,
+            57 => Self::Comedy,
+            58 => Self::Cult,
+            59 => Self::Gangsta,
+            60 => Self::Top40,
+            61 => Self::ChristianRap,
+            62 => Self::PopFunk,
+            63 => Self::Jungle,
+            64 => Self::NativeAmerican,
+            65 => Self::Cabaret,
+            66 => Self::NewWave,
+            67 => Self::Psychadelic,
+            68 => Self::Rave,
+            69 => Self::Showtunes,
+            70 => Self::Trailer,
+            71 => Self::LoFi,
+            72 => Self::Tribal,
+            73 => Self::AcidPunk,
+            74 => Self::AcidJazz,
+            75 => Self::Polka,
+            76 => Self::Retro,
+            77 => Self::Musical,
+            78 => Self::RockAndRoll,
+            79 => Self::HardRock,
+            80 => Self::Folk,
+            81 => Self::FolkRock,
+            82 => Self::NationalFolk,
+            83 => Self::Swing,
+            84 => Self::FastFusion,
+            85 => Self::Bebob,
+            86 => Self::Latin,
+            87 => Self::Revival,
+            88 => Self::Celtic,
+            89 => Self::Bluegrass,
+            90 => Self::Avantgarde,
+            91 => Self::GothicRock,
+            92 => Self::ProgressiveRock,
+            93 => Self::PsychedelicRock,
+            94 => Self::SymphonicRock,
+            95 => Self::SlowRock,
+            96 => Self::BigBand,
+            97 => Self::Chorus,
+            98 => Self::EasyListening,
+            99 => Self::Acoustic,
+            100 => Self::Humour,
+            101 => Self::Speech,
+            102 => Self::Chanson,
+            103 => Self::Opera,
+            104 => Self::ChamberMusic,
+            105 => Self::Sonata,
+            106 => Self::Symphony,
+            107 => Self::BootyBrass,
+            108 => Self::Primus,
+            109 => Self::PornGroove,
+            110 => Self::Satire,
+            111 => Self::SlowJam,
+            112 => Self::Club,
+            113 => Self::Tango,
+            114 => Self::Samba,
+            115 => Self::Folklore,
+            116 => Self::Ballad,
+            117 => Self::PowerBallad,
+            118 => Self::RhytmicSoul,
+            119 => Self::Freestyle,
+            120 => Self::Duet,
+            121 => Self::PunkRock,
+            122 => Self::DrumSolo,
+            123 => Self::ACapela,
+            124 => Self::EuroHouse,
+            125 => Self::DanceHall,
+            _ => Self::Unknown,
         }
     }
 }
@@ -491,7 +489,7 @@ impl From<u8> for Genre {
 impl fmt::Display for Genre {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Self::Something(s) => write!(f, "{}", s),
+            Self::Something(s) => write!(f, "{s}"),
             _ => fmt::Debug::fmt(self, f),
         }
     }
