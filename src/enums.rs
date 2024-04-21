@@ -347,7 +347,8 @@ impl Default for Genre {
 
 impl<'a> From<&'a str> for Genre {
     fn from(c: &'a str) -> Self {
-        c.parse::<u8>().map_or_else(|_| Self::Something(c.to_owned()), Self::from)
+        c.parse::<u8>()
+            .map_or_else(|_| Self::Something(c.to_owned()), Self::from)
     }
 }
 

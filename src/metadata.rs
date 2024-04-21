@@ -181,7 +181,11 @@ fn get_id3(i: &mut u32, buf: &[u8], meta: &mut MP3Metadata) -> Result<(), Error>
                                     .split(')')
                                     .collect::<Vec<&str>>()
                                     .into_iter()
-                                    .filter_map(|a| a.replace('(', "").parse::<u8>().map_or(None, |num| Some(Genre::from(num))))
+                                    .filter_map(|a| {
+                                        a.replace('(', "")
+                                            .parse::<u8>()
+                                            .map_or(None, |num| Some(Genre::from(num)))
+                                    })
                                     .collect::<Vec<Genre>>();
                                 if v.is_empty() {
                                     op.content_type.push(Genre::from(s.as_str()));
