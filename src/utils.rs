@@ -85,7 +85,16 @@ pub fn create_utf16_str(buf: &[u8]) -> String {
     return String::from_utf16_lossy(v.as_ref());
 }
 
-pub fn create_utf8_str(buf: &[u8]) -> String {
+pub fn create_utf8_str(mut buf: &[u8]) -> String {
+    // Remove trailing NUL bytes from the input
+    while let [rest @ .., last] = buf {
+        if *last == 0 {
+            buf = rest;
+        } else {
+            break;
+        }
+    }
+
     // String::from_utf8_lossy(buf).into_owned()
     String::from_utf8(buf.to_owned()).unwrap_or_default()
 }
