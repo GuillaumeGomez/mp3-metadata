@@ -28,17 +28,17 @@ fn invalid_time() {
                     i += 1;
                     continue;
                 }
-                if meta.frames[i].sampling_freq as u32 != frame.sample_rate {
+                if u32::from(meta.frames[i].sampling_freq) != frame.sample_rate {
                     println!(
                         "[{}] [SAMPLE_RATE] {} != {}",
                         i, meta.frames[i].sampling_freq, frame.sample_rate
                     );
                 }
-                if meta.frames[i].bitrate as u32 * 1000 != frame.bit_rate {
+                if u32::from(meta.frames[i].bitrate) * 1000 != frame.bit_rate {
                     println!(
                         "[{}] [BIT_RATE] {} != {}",
                         i,
-                        meta.frames[i].bitrate as u32 * 1000,
+                        u32::from(meta.frames[i].bitrate) * 1000,
                         frame.bit_rate
                     );
                 }

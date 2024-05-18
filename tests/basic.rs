@@ -25,18 +25,18 @@ fn basic() {
                         frame.duration
                     );
                 } else {
-                    if meta.frames[i].sampling_freq as u32 != frame.sample_rate {
+                    if u32::from(meta.frames[i].sampling_freq) != frame.sample_rate {
                         println!(
                             "[{}] [SAMPLE_RATE] {} != {}",
                             i, meta.frames[i].sampling_freq, frame.sample_rate
                         );
                         panic!();
                     }
-                    if meta.frames[i].bitrate as u32 * 1000 != frame.bit_rate {
+                    if u32::from(meta.frames[i].bitrate) * 1000 != frame.bit_rate {
                         println!(
                             "[{}] [BIT_RATE] {} != {}",
                             i,
-                            meta.frames[i].bitrate as u32 * 1000,
+                            u32::from(meta.frames[i].bitrate) * 1000,
                             frame.bit_rate
                         );
                         panic!();
@@ -68,21 +68,21 @@ fn basic() {
         assert_eq!(frame.crc, mp3_metadata::CRC::Added, "crc");
         assert_eq!(frame.bitrate, 128, "bitrate");
         assert_eq!(frame.sampling_freq, 44100, "sampling freq");
-        assert_eq!(frame.padding, false, "padding");
-        assert_eq!(frame.private_bit, false, "private bit");
+        assert!(!frame.padding, "padding");
+        assert!(!frame.private_bit, "private bit");
         assert_eq!(
             frame.chan_type,
             mp3_metadata::ChannelType::SingleChannel,
             "channel type"
         );
-        assert_eq!(frame.intensity_stereo, false, "intensity stereo");
-        assert_eq!(frame.ms_stereo, false, "ms stereo");
+        assert!(!frame.intensity_stereo, "intensity stereo");
+        assert!(!frame.ms_stereo, "ms stereo");
         assert_eq!(frame.copyright, mp3_metadata::Copyright::None, "copyright");
         assert_eq!(frame.status, mp3_metadata::Status::Copy, "status");
         assert_eq!(frame.emphasis, mp3_metadata::Emphasis::None, "emphasis");
     }
     assert_eq!(meta.frames.len(), 475, "number of frames");
-    assert_eq!(meta.duration, Duration::new(12, 408162800), "duration");
+    assert_eq!(meta.duration, Duration::new(12, 408_162_800), "duration");
     assert_eq!(
         meta.tag,
         Some(mp3_metadata::AudioTag {

@@ -1,6 +1,6 @@
 [package]
 name = "mp3-metadata"
-version = "0.3.4"
+version = "0.3.5"
 authors = ["Guillaume Gomez <guillaume1.gomez@gmail.com>"]
 
 description = "Metadata parser for MP3 files"
@@ -13,5 +13,5 @@ keywords = ["mp3", "metadata"]
 name = "mp3_metadata"
 
 [dev-dependencies]
-reqwest = { version = "0.11", features = ["blocking"] }
+reqwest = { version = "0.12.4", features = ["blocking"] }
 simplemad = "0.9"

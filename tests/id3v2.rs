@@ -13,11 +13,11 @@ fn id3v2() {
     assert_eq!(meta.optional_info[0].bpm, None);
     assert_eq!(
         meta.optional_info[0].composers,
-        vec!("not Mozart".to_owned(), "not Beethoven".to_owned())
+        vec!["not Mozart".to_owned(), "not Beethoven".to_owned()]
     );
     assert_eq!(
         meta.optional_info[0].content_type,
-        vec!(mp3_metadata::Genre::InstrumentalPop)
+        vec![mp3_metadata::Genre::InstrumentalPop]
     );
     assert_eq!(
         meta.optional_info[0].copyright,
@@ -40,7 +40,7 @@ fn id3v2() {
     );
     assert_eq!(
         meta.optional_info[0].performers,
-        vec!("Someone".to_owned(), "Someone else".to_owned())
+        vec!["Someone".to_owned(), "Someone else".to_owned()]
     );
     assert_eq!(
         meta.optional_info[0].band,
@@ -53,7 +53,7 @@ fn id3v2() {
         Some(mp3_metadata::AudioTag {
             title: "This is a wonderful title isn'".to_owned(),
             artist: "Someone/Someone else          ".to_owned(),
-            album: "".to_owned(),
+            album: String::new(),
             year: 2015,
             comment: "Some random comment because ".to_owned(),
             genre: mp3_metadata::Genre::Other,
