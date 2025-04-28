@@ -12,11 +12,11 @@ fn truncate() {
         assert_eq!(frame.crc, mp3_metadata::CRC::Added);
         assert_eq!(frame.bitrate, 128);
         assert_eq!(frame.sampling_freq, 44100);
-        assert_eq!(frame.padding, false);
-        assert_eq!(frame.private_bit, false);
+        assert!(!frame.padding);
+        assert!(!frame.private_bit);
         assert_eq!(frame.chan_type, mp3_metadata::ChannelType::SingleChannel);
-        assert_eq!(frame.intensity_stereo, false);
-        assert_eq!(frame.ms_stereo, false);
+        assert!(!frame.intensity_stereo);
+        assert!(!frame.ms_stereo);
         assert_eq!(frame.copyright, mp3_metadata::Copyright::None);
         assert_eq!(frame.status, mp3_metadata::Status::Copy);
         assert_eq!(frame.emphasis, mp3_metadata::Emphasis::None);

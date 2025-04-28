@@ -3,13 +3,13 @@ use std::io::Read;
 use std::path::Path;
 use std::time::Duration;
 
-use consts::{BITRATES, SAMPLING_FREQ};
-use enums::{ChannelType, Copyright, Emphasis, Error, Genre, Layer, Status, Version, CRC};
-use types::{AudioTag, Frame, MP3Metadata, OptionalAudioTags};
-use utils::{
+use crate::consts::{BITRATES, SAMPLING_FREQ};
+use crate::enums::{ChannelType, Copyright, Emphasis, Error, Genre, Layer, Status, Version, CRC};
+use crate::types::{AudioTag, Frame, MP3Metadata, OptionalAudioTags};
+use crate::utils::{
     compute_duration, create_utf8_str, get_line, get_samp_line, get_text_field, get_text_fields,
 };
-use utils::{get_url_field, get_url_fields};
+use crate::utils::{get_url_field, get_url_fields};
 
 fn get_id3(i: &mut u32, buf: &[u8], meta: &mut MP3Metadata) -> Result<(), Error> {
     let mut x = *i as usize;

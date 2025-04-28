@@ -10,9 +10,8 @@ fn basic() {
     let meta = mp3_metadata::read_from_file("assets/test.mp3").expect("File error");
     let file = File::open("assets/test.mp3").unwrap();
     let decoder = simplemad::Decoder::decode(file).unwrap();
-    let mut i = 0;
     let mut sum = Duration::new(0, 0);
-    for decoding_result in decoder {
+    for (i, decoding_result) in decoder.enumerate() {
         match decoding_result {
             Err(_) => {}
             Ok(frame) => {
@@ -59,7 +58,6 @@ fn basic() {
                 sum += frame.duration;
             }
         }
-        i += 1;
     }
     if let Some(frame) = meta.frames.first() {
         assert_eq!(frame.size, 417, "frame size");
@@ -68,15 +66,15 @@ fn basic() {
         assert_eq!(frame.crc, mp3_metadata::CRC::Added, "crc");
         assert_eq!(frame.bitrate, 128, "bitrate");
         assert_eq!(frame.sampling_freq, 44100, "sampling freq");
-        assert_eq!(frame.padding, false, "padding");
-        assert_eq!(frame.private_bit, false, "private bit");
+        assert!(!frame.padding, "padding");
+        assert!(!frame.private_bit, "private bit");
         assert_eq!(
             frame.chan_type,
             mp3_metadata::ChannelType::SingleChannel,
             "channel type"
         );
-        assert_eq!(frame.intensity_stereo, false, "intensity stereo");
-        assert_eq!(frame.ms_stereo, false, "ms stereo");
+        assert!(!frame.intensity_stereo, "intensity stereo");
+        assert!(!frame.ms_stereo, "ms stereo");
         assert_eq!(frame.copyright, mp3_metadata::Copyright::None, "copyright");
         assert_eq!(frame.status, mp3_metadata::Status::Copy, "status");
         assert_eq!(frame.emphasis, mp3_metadata::Emphasis::None, "emphasis");
