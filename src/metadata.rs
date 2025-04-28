@@ -97,7 +97,11 @@ fn get_id3(i: &mut u32, buf: &[u8], meta: &mut MP3Metadata) -> Result<(), Error>
                     return Ok(());
                 }
                 if i + 1 < tag_size && buf[i] == 0xFF && buf[i + 1] == 0 {
-                    v[new_pos] = 0xFF;
+                    if let Some(elem) = v.get_mut(new_pos) {
+                        *elem = 0xFF;
+                    } else {
+                        return Err(Error::InvalidData);
+                    }
                     new_pos += 1;
                     skip = true;
                     continue;
@@ -524,22 +528,43 @@ pub fn read_from_slice(buf: &[u8]) -> Result<MP3Metadata, Error> {
     }
 }
 
-#[test]
-fn not_mp3() {
-    let ret = read_from_file("src/lib.rs");
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-    match ret {
-        Ok(_) => panic!("Wasn't supposed to be ok!"),
-        Err(e) => assert_eq!(e, Error::NotMP3),
+    #[test]
+    fn not_mp3() {
+        let ret = read_from_file("src/lib.rs");
+
+        match ret {
+            Ok(_) => panic!("Wasn't supposed to be ok!"),
+            Err(e) => assert_eq!(e, Error::NotMP3),
+        }
     }
-}
 
-#[test]
-fn double_id() {
-    let ret = read_from_file("assets/double_id.mp3");
+    #[test]
+    fn double_id() {
+        let ret = read_from_file("assets/double_id.mp3");
 
-    match ret {
-        Ok(_) => panic!("Wasn't supposed to be ok!"),
-        Err(e) => assert_eq!(e, Error::DuplicatedIDV3),
+        match ret {
+            Ok(_) => panic!("Wasn't supposed to be ok!"),
+            Err(e) => assert_eq!(e, Error::DuplicatedIDV3),
+        }
+    }
+
+    #[test]
+    fn wrong_data() {
+        let data = [
+            255, 0, 0, 16, 0, 12, 0, 5, 43, 51, 61, 61, 90, 0, 0, 50, 5, 255, 239, 32, 61, 61, 61,
+            61, 61, 61, 92, 61, 65, 51, 255, 230, 255, 5, 61, 61, 5, 255, 255, 5, 43, 51, 61, 61,
+            5, 255, 255, 5, 169, 169, 73, 68, 51, 0, 0, 187, 0, 0, 0, 0, 0, 0, 0, 50, 5, 255, 255,
+            5, 169, 169, 73, 68, 51, 0, 0, 187, 0, 0, 0, 0, 0, 0, 0, 0, 51, 180, 255, 0, 0, 51, 5,
+            255, 252, 5, 43, 51, 51, 0, 1, 32, 31, 0, 0, 51, 51, 148, 255, 255, 16, 51, 51, 53,
+            250, 0, 1, 61, 61, 61, 0, 51, 180, 255, 0, 0, 51, 5, 255, 252, 5, 43, 51, 51, 0, 1, 32,
+            31, 0, 0, 51, 5, 255, 255, 5, 169, 169, 73, 68, 51, 0, 0, 187, 0, 0, 0, 0, 0, 0, 0, 50,
+            5, 255, 255, 5, 169, 169, 73, 68, 51, 0, 0, 187, 0, 0, 0, 0, 0, 0, 0, 0, 51, 180, 255,
+            0, 0, 51, 5, 255, 252, 5, 43, 51, 148, 255, 255, 16,
+        ];
+        assert!(read_from_slice(&data).is_err());
     }
 }
