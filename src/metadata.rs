@@ -3,13 +3,13 @@ use std::io::Read;
 use std::path::Path;
 use std::time::Duration;
 
-use consts::{BITRATES, SAMPLING_FREQ};
-use enums::{ChannelType, Copyright, Emphasis, Error, Genre, Layer, Status, Version, CRC};
-use types::{AudioTag, Frame, MP3Metadata, OptionalAudioTags};
-use utils::{
+use crate::consts::{BITRATES, SAMPLING_FREQ};
+use crate::enums::{ChannelType, Copyright, Emphasis, Error, Genre, Layer, Status, Version, CRC};
+use crate::types::{AudioTag, Frame, MP3Metadata, OptionalAudioTags};
+use crate::utils::{
     compute_duration, create_utf8_str, get_line, get_samp_line, get_text_field, get_text_fields,
 };
-use utils::{get_url_field, get_url_fields};
+use crate::utils::{get_url_field, get_url_fields};
 
 fn get_id3(i: &mut u32, buf: &[u8], meta: &mut MP3Metadata) -> Result<(), Error> {
     let mut x = *i as usize;
@@ -380,10 +380,10 @@ fn get_id3(i: &mut u32, buf: &[u8], meta: &mut MP3Metadata) -> Result<(), Error>
 }
 
 fn read_header(buf: &[u8], i: &mut u32, meta: &mut MP3Metadata) -> Result<bool, Error> {
-    let header = (buf[*i as usize] as u32) << 24
-        | (buf[*i as usize + 1] as u32) << 16
-        | (buf[*i as usize + 2] as u32) << 8
-        | buf[*i as usize + 3] as u32;
+    let header = ((buf[*i as usize] as u32) << 24)
+        | ((buf[*i as usize + 1] as u32) << 16)
+        | ((buf[*i as usize + 2] as u32) << 8)
+        | (buf[*i as usize + 3] as u32);
     if header & 0xffe00000 == 0xffe00000
         && header & (3 << 17) != 0
         && header & (0xf << 12) != (0xf << 12)

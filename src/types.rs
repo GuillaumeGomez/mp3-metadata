@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use enums::{ChannelType, Copyright, Emphasis, Genre, Layer, Status, Version, CRC};
+use crate::enums::{ChannelType, Copyright, Emphasis, Genre, Layer, Status, Version, CRC};
 
 #[derive(Debug, Default, Eq, PartialEq)]
 pub struct Frame {

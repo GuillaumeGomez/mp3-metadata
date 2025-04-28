@@ -2,6 +2,8 @@
 name = "mp3-metadata"
 version = "0.3.4"
 authors = ["Guillaume Gomez <guillaume1.gomez@gmail.com>"]
+rust-version = "1.56"
+edition = "2021"
 
 description = "Metadata parser for MP3 files"
 repository = "https://github.com/GuillaumeGomez/mp3-metadata"
