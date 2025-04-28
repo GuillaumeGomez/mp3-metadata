@@ -380,10 +380,10 @@ fn get_id3(i: &mut u32, buf: &[u8], meta: &mut MP3Metadata) -> Result<(), Error>
 }
 
 fn read_header(buf: &[u8], i: &mut u32, meta: &mut MP3Metadata) -> Result<bool, Error> {
-    let header = (buf[*i as usize] as u32) << 24
-        | (buf[*i as usize + 1] as u32) << 16
-        | (buf[*i as usize + 2] as u32) << 8
-        | buf[*i as usize + 3] as u32;
+    let header = ((buf[*i as usize] as u32) << 24)
+        | ((buf[*i as usize + 1] as u32) << 16)
+        | ((buf[*i as usize + 2] as u32) << 8)
+        | (buf[*i as usize + 3] as u32);
     if header & 0xffe00000 == 0xffe00000
         && header & (3 << 17) != 0
         && header & (0xf << 12) != (0xf << 12)

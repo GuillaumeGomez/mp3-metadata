@@ -65,14 +65,14 @@ pub fn create_utf16_str(buf: &[u8]) -> String {
             // UTF-16BE
             v.reserve(buf.len() / 2 - 1);
             for i in 1..buf.len() / 2 {
-                v.push((buf[2 * i] as u16) << 8 | (buf[2 * i + 1] as u16))
+                v.push(((buf[2 * i] as u16) << 8) | (buf[2 * i + 1] as u16));
             }
             return String::from_utf16_lossy(v.as_ref());
         } else if buf[0] == 0xff && buf[1] == 0xfe {
             // UTF-16LE
             v.reserve(buf.len() / 2 - 1);
             for i in 1..buf.len() / 2 {
-                v.push((buf[2 * i + 1] as u16) << 8 | (buf[2 * i] as u16))
+                v.push(((buf[2 * i + 1] as u16) << 8) | (buf[2 * i] as u16));
             }
             return String::from_utf16_lossy(v.as_ref());
         }
@@ -80,9 +80,9 @@ pub fn create_utf16_str(buf: &[u8]) -> String {
     // try as UTF-16LE
     v.reserve(buf.len() / 2);
     for i in 0..buf.len() / 2 {
-        v.push((buf[2 * i + 1] as u16) << 8 | (buf[2 * i] as u16))
+        v.push(((buf[2 * i + 1] as u16) << 8) | (buf[2 * i] as u16))
     }
-    return String::from_utf16_lossy(v.as_ref());
+    String::from_utf16_lossy(v.as_ref())
 }
 
 pub fn create_utf8_str(mut buf: &[u8]) -> String {
